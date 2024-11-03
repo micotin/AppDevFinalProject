@@ -139,9 +139,15 @@ export default {
 }
 
 .hero-section {
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('@/assets/images/flower-hero-bg.jpg') center center / cover;
-  padding: 140px 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/images/background.jpg') center center / cover no-repeat;
+  height: 70vh; /* This sets the height */
+  padding: 0; /* Remove padding to use the full height */
   position: relative;
+  width: 100vw; /* Make sure the section spans the full viewport width */
+  left: 50%; /* Shift to the right by half of the viewport */
+  right: 50%; /* Shift to the left by half of the viewport */
+  margin-left: -50vw; /* Pull back by half of the viewport width */
+  margin-right: -50vw; /* Pull back by half of the viewport width */
 }
 
 .featured-arrangements h2,
