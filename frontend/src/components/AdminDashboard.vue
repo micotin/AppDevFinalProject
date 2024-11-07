@@ -7,9 +7,33 @@
       <div class="col-md-3 mb-4" v-for="(stat, index) in stats" :key="index">
         <div class="card border-0 shadow-sm rounded">
           <div class="card-body text-center">
-            <i :class="stat.icon + ' fs-1 mb-2 floral-icon'"></i>
+            <component :is="stat.icon" class="fs-1 mb-2 floral-icon" />
             <h5 class="card-title">{{ stat.title }}</h5>
             <p class="card-text fs-4 fw-bold">{{ stat.value }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Chart -->
+      <div class="col-md-8 mb-4">
+        <div class="card border-0 shadow-sm rounded">
+          <div class="card-header bg-light floral-header">
+            <h5 class="card-title mb-0">📊 Sales Overview</h5>
+          </div>
+          <div class="card-body">
+            <canvas ref="salesChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Categories Pie Chart -->
+      <div class="col-md-4 mb-4">
+        <div class="card border-0 shadow-sm rounded">
+          <div class="card-header bg-light floral-header">
+            <h5 class="card-title mb-0">🥧 Product Categories</h5>
+          </div>
+          <div class="card-body">
+            <canvas ref="categoriesChart"></canvas>
           </div>
         </div>
       </div>
@@ -83,75 +107,162 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from 'vue';
 import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { Chart, registerables } from 'chart.js';
+import { ShoppingCart, DollarSign, Package, Users } from 'lucide-vue-next';
 
-export default {
-  name: 'AdminDashboard',
-  setup() {
-    const stats = ref([
-      { title: 'Total Orders', value: 0, icon: 'bi bi-cart-check' },
-      { title: 'Total Revenue', value: '₱0', icon: 'bi bi-currency-dollar' },
-      { title: 'Total Products', value: 0, icon: 'bi bi-box-seam' },
-      { title: 'Total Users', value: 0, icon: 'bi bi-people' }
-    ]);
+Chart.register(...registerables);
 
-    const recentOrders = ref([]);
-    const topProducts = ref([]);
+const stats = ref([
+  { title: 'Total Orders', value: 0, icon: ShoppingCart },
+  { title: 'Total Revenue', value: '₱0', icon: DollarSign },
+  { title: 'Total Products', value: 0, icon: Package },
+  { title: 'Total Users', value: 0, icon: Users }
+]);
 
-    const fetchDashboardData = async () => {
-      const ordersSnapshot = await getDocs(collection(db, 'orders'));
-      const productsSnapshot = await getDocs(collection(db, 'products'));
-      const usersSnapshot = await getDocs(collection(db, 'users'));
+const recentOrders = ref([]);
+const topProducts = ref([]);
+const salesChart = ref(null);
+const categoriesChart = ref(null);
 
-      let totalRevenue = 0;
-      ordersSnapshot.forEach(doc => {
-        totalRevenue += doc.data().total;
-      });
+const fetchDashboardData = async () => {
+  const ordersSnapshot = await getDocs(collection(db, 'orders'));
+  const productsSnapshot = await getDocs(collection(db, 'products'));
+  const usersSnapshot = await getDocs(collection(db, 'users'));
 
-      stats.value[0].value = ordersSnapshot.size;
-      stats.value[1].value = `₱${totalRevenue.toFixed(2)}`;
-      stats.value[2].value = productsSnapshot.size;
-      stats.value[3].value = usersSnapshot.size;
+  let totalRevenue = 0;
+  ordersSnapshot.forEach(doc => {
+    totalRevenue += doc.data().total;
+  });
 
-      // Fetch recent orders
-      const recentOrdersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
-      const recentOrdersSnapshot = await getDocs(recentOrdersQuery);
-      recentOrders.value = recentOrdersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+  stats.value[0].value = ordersSnapshot.size;
+  stats.value[1].value = `₱${totalRevenue.toFixed(2)}`;
+  stats.value[2].value = productsSnapshot.size;
+  stats.value[3].value = usersSnapshot.size;
 
-      // Fetch top products
-      const topProductsQuery = query(collection(db, 'products'), orderBy('sales', 'desc'), limit(5));
-      const topProductsSnapshot = await getDocs(topProductsQuery);
-      topProducts.value = topProductsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    };
+  // Fetch recent orders
+  const recentOrdersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
+  const recentOrdersSnapshot = await getDocs(recentOrdersQuery);
+  recentOrders.value = recentOrdersSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
 
-    const getStatusClass = (status) => {
-      switch (status.toLowerCase()) {
-        case 'completed': return 'bg-success';
-        case 'processing': return 'bg-warning text-dark';
-        case 'cancelled': return 'bg-danger';
-        default: return 'bg-secondary';
-      }
-    };
+  // Fetch top products
+  const topProductsQuery = query(collection(db, 'products'), orderBy('sales', 'desc'), limit(5));
+  const topProductsSnapshot = await getDocs(topProductsQuery);
+  topProducts.value = topProductsSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
 
-    onMounted(fetchDashboardData);
+  // Prepare data for charts
+  const salesData = await prepareSalesData();
+  const categoriesData = await prepareCategoriesData();
 
-    return {
-      stats,
-      recentOrders,
-      topProducts,
-      getStatusClass
-    };
+  // Create charts
+  createSalesChart(salesData);
+  createCategoriesChart(categoriesData);
+};
+
+const getStatusClass = (status) => {
+  switch (status.toLowerCase()) {
+    case 'completed': return 'bg-success';
+    case 'processing': return 'bg-warning text-dark';
+    case 'cancelled': return 'bg-danger';
+    default: return 'bg-secondary';
   }
 };
+
+const prepareSalesData = async () => {
+  const salesQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(30));
+  const salesSnapshot = await getDocs(salesQuery);
+  const salesByDate = {};
+
+  salesSnapshot.forEach(doc => {
+    const date = new Date(doc.data().createdAt.seconds * 1000).toLocaleDateString();
+    salesByDate[date] = (salesByDate[date] || 0) + doc.data().total;
+  });
+
+  return {
+    labels: Object.keys(salesByDate),
+    data: Object.values(salesByDate)
+  };
+};
+
+const prepareCategoriesData = async () => {
+  const productsSnapshot = await getDocs(collection(db, 'products'));
+  const categories = {};
+
+  productsSnapshot.forEach(doc => {
+    const category = doc.data().category;
+    categories[category] = (categories[category] || 0) + 1;
+  });
+
+  return {
+    labels: Object.keys(categories),
+    data: Object.values(categories)
+  };
+};
+
+const createSalesChart = (salesData) => {
+  const ctx = salesChart.value.getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: salesData.labels,
+      datasets: [{
+        label: 'Daily Sales',
+        data: salesData.data,
+        borderColor: '#FF69B4',
+        backgroundColor: 'rgba(255, 105, 180, 0.1)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Sales (₱)'
+          }
+        }
+      }
+    }
+  });
+};
+
+const createCategoriesChart = (categoriesData) => {
+  const ctx = categoriesChart.value.getContext('2d');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: categoriesData.labels,
+      datasets: [{
+        data: categoriesData.data,
+        backgroundColor: [
+          '#FF69B4', '#FFB6C1', '#FFC0CB', '#FF1493', '#DB7093',
+          '#C71585', '#FFA07A', '#FF7F50', '#FF6347', '#FF4500'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'right'
+        }
+      }
+    }
+  });
+};
+
+onMounted(fetchDashboardData);
 </script>
 
 <style scoped>

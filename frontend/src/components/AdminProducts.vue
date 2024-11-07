@@ -17,7 +17,6 @@
                     <th class="py-3">Image</th>
                     <th class="py-3">Name</th>
                     <th class="py-3">Price</th>
-                    <th class="py-3">Description</th>
                     <th class="py-3">Category</th>
                   </tr>
                 </thead>
@@ -26,8 +25,7 @@
                     <td class="py-3"><img :src="product.imageUrl" :alt="product.name" class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;"></td>
                     <td class="py-3">{{ product.name }}</td>
                     <td class="py-3">₱{{ product.price.toFixed(2) }}</td>
-                    <td class="py-3">{{ product.description }}</td>
-                    <td class="py-3"><span class="badge bg-info text-dark">{{ product.category }}</span></td>
+                    <td class="py-3"><span :class="['badge', getCategoryClass(product.category)]">{{ product.category }}</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -60,7 +58,7 @@
                     <td class="py-3"><img :src="product.imageUrl" :alt="product.name" class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;"></td>
                     <td class="py-3">{{ product.name }}</td>
                     <td class="py-3">₱{{ product.price.toFixed(2) }}</td>
-                    <td class="py-3"><span class="badge bg-info text-dark">{{ product.category }}</span></td>
+                    <td class="py-3"><span :class="['badge', getCategoryClass(product.category)]">{{ product.category }}</span></td>
                     <td class="py-3">
                       <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" v-model="product.featured" @change="toggleFeatured(product)">
@@ -118,6 +116,35 @@
       </div>
     </div>
 
+    <!-- Loading Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body text-center py-4">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 id="loadingModalLabel">{{ loadingMessage }}</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body text-center py-4">
+            <i class="bi bi-check-circle text-success display-1 mb-3"></i>
+            <h5 id="successModalLabel">{{ successMessage }}</h5>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -131,7 +158,31 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="deleteProduct">Delete</button>
+            <button type="button" class="btn btn-danger" @click="initiateDelete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Countdown Modal -->
+    <div class="modal fade" id="deleteCountdownModal" tabindex="-1" aria-labelledby="deleteCountdownModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body text-center py-4">
+            <h5 id="deleteCountdownModalLabel">Deleting product in</h5>
+            <div class="countdown-circle my-3">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e9ecef" stroke-width="10" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#dc3545" stroke-width="10"
+                        stroke-dasharray="283" :stroke-dashoffset="deleteCountdownProgress" />
+                <text x="50" y="50" text-anchor="middle" dy=".3em" font-size="24">{{ deleteCountdown }}</text>
+              </svg>
+            </div>
+            <p>Click cancel to stop the deletion</p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary" @click="cancelDelete">Cancel</button>
+            <button type="button" class="btn btn-danger" @click="confirmDeleteNow">Delete Now</button>
           </div>
         </div>
       </div>
@@ -140,9 +191,10 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 import { db, storage } from '../firebaseConfig';
 import { Modal } from 'bootstrap';
 
@@ -163,8 +215,50 @@ export default {
     const editMode = ref(false);
     const currentProductId = ref(null);
     const selectedImage = ref(null);
-    const deleteModal = ref(null);
+    const loadingMessage = ref('');
+    const successMessage = ref('');
     const productToDelete = ref(null);
+    const deleteCountdown = ref(15);
+    const deleteCountdownInterval = ref(null);
+
+    const auth = getAuth();
+
+    const loadingModal = ref(null);
+    const successModal = ref(null);
+    const deleteModal = ref(null);
+    const deleteCountdownModal = ref(null);
+
+    const deleteCountdownProgress = computed(() => {
+      return 283 - (283 * deleteCountdown.value) / 15;
+    });
+
+    const getCategoryClass = (category) => {
+      const classes = {
+        'Wedding': 'bg-primary',
+        'Birthday': 'bg-success',
+        'Anniversary': 'bg-info',
+        'Corporate Event': 'bg-secondary',
+        'Graduation': 'bg-warning text-dark',
+        'Baby Shower': 'bg-pink',
+        'Funeral': 'bg-dark',
+        'Others': 'bg-light text-dark'
+      };
+      return classes[category] || 'bg-info';
+    };
+
+    const showLoading = (message) => {
+      loadingMessage.value = message;
+      loadingModal.value.show();
+    };
+
+    const hideLoading = () => {
+      loadingModal.value.hide();
+    };
+
+    const showSuccess = (message) => {
+      successMessage.value = message;
+      successModal.value.show();
+    };
 
     const fetchProducts = async () => {
       const querySnapshot = await getDocs(collection(db, 'products'));
@@ -176,73 +270,168 @@ export default {
     };
 
     const addProduct = async () => {
-      const imageUrl = await uploadImage(selectedImage.value);
-      await addDoc(collection(db, 'products'), {
-        ...product.value,
-        imageUrl,
-        featured: product.value.featured,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      clearForm();
-      fetchProducts();
+      if (selectedImage.value) {
+        showLoading('Adding product...');
+        try {
+          const storageReference = storageRef(storage, 'productImages/' + selectedImage.value.name);
+          await uploadBytes(storageReference, selectedImage.value);
+          const imageUrl = await getDownloadURL(storageReference);
+
+          const newProduct = await addDoc(collection(db, 'products'), {
+            ...product.value,
+            imageUrl,
+            timestamp: serverTimestamp()
+          });
+          
+          await addDoc(collection(db, 'adminHistory'), {
+            adminEmail: auth.currentUser.email,
+            action: 'Added product',
+            productName: product.value.name,
+            timestamp: serverTimestamp()
+          });
+
+          await fetchProducts();
+          clearForm();
+          hideLoading();
+          showSuccess('Product added successfully!');
+        } catch (error) {
+          console.error('Error adding product:', error);
+          hideLoading();
+          // Show error message to user
+        }
+      }
     };
 
     const updateProduct = async () => {
-      const productRef = doc(db, 'products', currentProductId.value);
-      if (selectedImage.value) {
-        product.value.imageUrl = await uploadImage(selectedImage.value);
+      showLoading('Updating product...');
+      try {
+        let imageUrl = product.value.imageUrl;
+        if (selectedImage.value) {
+          const storageReference = storageRef(storage, 'productImages/' + selectedImage.value.name);
+          await uploadBytes(storageReference, selectedImage.value);
+          imageUrl = await getDownloadURL(storageReference);
+        }
+
+        await updateDoc(doc(db, 'products', currentProductId.value), {
+          ...product.value,
+          imageUrl,
+          timestamp: serverTimestamp()
+        });
+
+        await addDoc(collection(db, 'adminHistory'), {
+          adminEmail: auth.currentUser.email,
+          action: 'Updated product',
+          productName: product.value.name,
+          timestamp: serverTimestamp()
+        });
+
+        await fetchProducts();
+        clearForm();
+        hideLoading();
+        showSuccess('Product updated successfully!');
+      } catch (error) {
+        console.error('Error updating product:', error);
+        hideLoading();
+        // Show error message to user
       }
-      await updateDoc(productRef, {
-        ...product.value,
-        updatedAt: serverTimestamp()
-      });
-      clearForm();
-      fetchProducts();
     };
 
-    const editProduct = (productToEdit) => {
-      product.value = { ...productToEdit };
-      editMode.value = true;
-      currentProductId.value = productToEdit.id;
-    };
-
-    const toggleFeatured = async (product) => {
-      const productRef = doc(db, 'products', product.id);
-      await updateDoc(productRef, { featured: product.featured });
-      fetchProducts();
-    };
-
-    const confirmDelete = (productToDelete) => {
-      productToDelete.value = productToDelete;
-      deleteModal.value = new Modal(document.getElementById('deleteModal'));
+    const confirmDelete = (product) => {
+      productToDelete.value = product;
       deleteModal.value.show();
     };
 
-    const deleteProduct = async () => {
-      await deleteDoc(doc(db, 'products', productToDelete.value.id));
+    const initiateDelete = () => {
       deleteModal.value.hide();
-      fetchProducts();
+      deleteCountdown.value = 15;
+      deleteCountdownModal.value.show();
+      deleteCountdownInterval.value = setInterval(() => {
+        deleteCountdown.value--;
+        if (deleteCountdown.value === 0) {
+          clearInterval(deleteCountdownInterval.value);
+          deleteProduct();
+        }
+      }, 1000);
     };
 
-    const clearForm = () => {
-      product.value = { name: '', price: 0, description: '', imageUrl: '', category: '', featured: false };
-      editMode.value = false;
-      selectedImage.value = null;
+    const cancelDelete = () => {
+      clearInterval(deleteCountdownInterval.value);
+      deleteCountdownModal.value.hide();
+    };
+
+    const confirmDeleteNow = () => {
+      clearInterval(deleteCountdownInterval.value);
+      deleteProduct();
+    };
+
+    const deleteProduct = async () => {
+      deleteCountdownModal.value.hide();
+      showLoading('Deleting product...');
+      try {
+        await deleteDoc(doc(db, 'products', productToDelete.value.id));
+
+        await addDoc(collection(db, 'adminHistory'), {
+          adminEmail: auth.currentUser.email,
+          action: 'Deleted product',
+          productName: productToDelete.value.name,
+          timestamp: serverTimestamp()
+        });
+
+        await fetchProducts();
+        hideLoading();
+        showSuccess('Product deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        hideLoading();
+        // Show error message to user
+      }
     };
 
     const handleImageUpload = (event) => {
       selectedImage.value = event.target.files[0];
     };
 
-    const uploadImage = async (image) => {
-      if (!image) return '';
-      const storageReference = storageRef(storage, `product-images/${image.name}`);
-      await uploadBytes(storageReference, image);
-      return await getDownloadURL(storageReference);
+    const clearForm = () => {
+      product.value = {
+        name: '',
+        price: 0,
+        description: '',
+        imageUrl: '',
+        category: '',
+        featured: false
+      };
+      selectedImage.value = null;
+      editMode.value = false;
     };
 
-    onMounted(fetchProducts);
+    const editProduct = (productToEdit) => {
+      product.value = { ...productToEdit };
+      currentProductId.value = productToEdit.id;
+      editMode.value = true;
+    };
+
+    const toggleFeatured = async (productToToggle) => {
+      await updateDoc(doc(db, 'products', productToToggle.id), {
+        featured: productToToggle.featured
+      });
+
+      await addDoc(collection(db, 'adminHistory'), {
+        adminEmail: auth.currentUser.email,
+        action: productToToggle.featured ? 'Featured product' : 'Unfeatured product',
+        productName: productToToggle.name,
+        timestamp: serverTimestamp()
+      });
+
+      await fetchProducts();
+    };
+
+    onMounted(() => {
+      fetchProducts();
+      loadingModal.value = new Modal(document.getElementById('loadingModal'));
+      successModal.value = new Modal(document.getElementById('successModal'));
+      deleteModal.value = new Modal(document.getElementById('deleteModal'));
+      deleteCountdownModal.value = new Modal(document.getElementById('deleteCountdownModal'));
+    });
 
     return {
       products,
@@ -252,12 +441,20 @@ export default {
       editMode,
       addProduct,
       updateProduct,
-      editProduct,
-      deleteProduct,
-      clearForm,
       confirmDelete,
+      deleteProduct,
       handleImageUpload,
-      toggleFeatured
+      clearForm,
+      editProduct,
+      toggleFeatured,
+      getCategoryClass,
+      loadingMessage,
+      successMessage,
+      initiateDelete,
+      cancelDelete,
+      confirmDeleteNow,
+      deleteCountdown,
+      deleteCountdownProgress
     };
   }
 };
@@ -265,50 +462,59 @@ export default {
 
 <style scoped>
 .admin-products {
-  padding: 2rem;
+  font-family: Arial, sans-serif;
 }
 
-.card {
-  transition: all 0.3s ease;
+.table th {
+  background-color: #f8f9fa;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-}
-
-.table th, .table td {
+.table td {
   vertical-align: middle;
 }
 
-.form-check-input:checked {
+.card-header {
   background-color: #0d6efd;
-  border-color: #0d6efd;
 }
 
-.btn-primary {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+.card-body {
+  background-color: #fff;
 }
 
-.btn-primary:hover {
-  background-color: #0b5ed7;
-  border-color: #0a58ca;
+.btn-outline-danger,
+.btn-outline-primary {
+  border: none;
+  color: #6c757d;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-primary:hover {
+  color: #fff;
+  background-color: #6c757d;
 }
 
 .modal-content {
-  border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
 }
 
-.modal-header {
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
+.form-check-input {
+  cursor: pointer;
 }
 
-@media (max-width: 992px) {
-  .admin-products {
-    padding: 1rem;
-  }
+.form-select {
+  margin-top: 5px;
+}
+
+.countdown-circle {
+  position: relative;
+}
+
+.countdown-circle svg {
+  transform: rotate(-90deg);
+}
+
+.countdown-circle text {
+  font-weight: bold;
+  fill: #dc3545;
 }
 </style>

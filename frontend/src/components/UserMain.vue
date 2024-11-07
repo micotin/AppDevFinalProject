@@ -42,7 +42,7 @@
                 </router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/shop" active-class="active">
+                <router-link class="nav-link" to="/user/shop" active-class="active">
                   <i class="bi bi-shop me-1"></i> Shop
                 </router-link>
               </li>
@@ -88,7 +88,9 @@
                     <button class="action-btn" title="Cart" @click="goToCartFav">
                       <i class="bi bi-cart"></i>
                     </button>
-                    <button class="action-btn" title="Orders"><i class="bi bi-bag"></i></button>
+                    <button class="action-btn" title="Orders" @click="goToOrders">
+                      <i class="bi bi-bag"></i>
+                    </button>
                     <button class="action-btn" title="Account Settings" @click="goToAccount">
                       <i class="bi bi-gear"></i>
                     </button>
@@ -158,16 +160,16 @@
       </div>
     </footer>
   </div>
-  </template>
-  
-  <script>
-  import { ref, onMounted, onUnmounted } from 'vue';
-  import { useRouter } from 'vue-router';
-  import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
-  import { doc, getDoc } from 'firebase/firestore';
-  import { db } from '../firebaseConfig';
-  
-  export default {
+</template>
+
+<script>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+
+export default {
   name: 'UserMain',
   setup() {
     const router = useRouter();
@@ -179,39 +181,44 @@
     const isDropdownOpen = ref(false);
     const memberSince = ref('');
     const lastLogin = ref('');
-  
+
     const handleImageError = (e) => {
       e.target.src = defaultImage;
     };
-  
+
     const toggleDropdown = () => {
       isDropdownOpen.value = !isDropdownOpen.value;
     };
-  
+
     const closeDropdown = () => {
       isDropdownOpen.value = false;
     };
-  
+
     const editProfile = () => {
       router.push('/user/account');
       closeDropdown();
     };
-  
+
     const goToAccount = () => {
       router.push('/user/account');
       closeDropdown();
     };
-  
+
     const goToCartFav = () => {
       router.push('/user/cart-fav');
       closeDropdown();
     };
-  
+
+    const goToOrders = () => {
+      router.push('/user/order');
+      closeDropdown();
+    };
+
     const fetchUserProfile = async (user) => {
       try {
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
-  
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           userName.value = `${userData.firstName} ${userData.lastName}`;
@@ -224,7 +231,7 @@
         console.error('Error fetching user profile:', error);
       }
     };
-  
+
     const logout = async () => {
       try {
         const auth = getAuth();
@@ -234,9 +241,9 @@
         console.error('Error signing out:', error);
       }
     };
-  
+
     let unsubscribe;
-  
+
     onMounted(() => {
       const auth = getAuth();
       unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -251,7 +258,7 @@
           lastLogin.value = '';
         }
       });
-  
+
       document.addEventListener('click', (e) => {
         const dropdown = document.querySelector('.profile-dropdown');
         const toggle = document.querySelector('.profile-toggle');
@@ -260,12 +267,12 @@
         }
       });
     });
-  
+
     onUnmounted(() => {
       if (unsubscribe) unsubscribe();
       document.removeEventListener('click', closeDropdown);
     });
-  
+
     return {
       isAuthenticated,
       userName,
@@ -281,53 +288,56 @@
       editProfile,
       goToAccount,
       goToCartFav,
+      goToOrders,
       logout,
     };
   },
-  };
-  </script>
-  
-  <style scoped>
-  .user-main {
+};
+</script>
+
+
+
+<style scoped>
+.user-main {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  }
-  
-  .header {
+}
+
+.header {
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 1000;
   background: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .main-content {
+}
+
+.main-content {
   padding-top: 5rem;
   flex: 1;
-  }
-  
-  .navbar-brand {
+}
+
+.navbar-brand {
   font-size: 1.5rem;
   font-weight: 600;
   color: #333;
-  }
-  
-  .brand-text {
+}
+
+.brand-text {
   background: linear-gradient(45deg, #6a3093, #a044ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  }
-  
-  .nav-link {
+}
+
+.nav-link {
   font-weight: 500;
   color: #4a4a4a;
   transition: all 0.3s ease;
   position: relative;
-  }
-  
-  .nav-link::after {
+}
+
+.nav-link::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -337,14 +347,14 @@
   background: linear-gradient(45deg, #6a3093, #a044ff);
   transition: all 0.3s ease;
   transform: translateX(-50%);
-  }
-  
-  .nav-link:hover::after,
-  .nav-link.active::after {
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
   width: 100%;
-  }
-  
-  .profile-dropdown {
+}
+
+.profile-dropdown {
   width: 300px;
   padding: 0;
   border: none;
@@ -353,59 +363,59 @@
   background-color: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   margin-top: 0.5rem;
-  }
-  
-  .dropdown-header {
+}
+
+.dropdown-header {
   background: linear-gradient(45deg, #6a3093, #a044ff);
   color: white;
   padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  }
-  
-  .edit-button {
+}
+
+.edit-button {
   background: none;
   border: none;
   color: white;
   cursor: pointer;
-  }
-  
-  .profile-content {
+}
+
+.profile-content {
   padding: 1rem;
-  }
-  
-  .avatar-container {
+}
+
+.avatar-container {
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
-  }
-  
-  .avatar-image {
+}
+
+.avatar-image {
   width: 80px;
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #6a3093;
-  }
-  
-  .email-container {
+}
+
+.email-container {
   text-align: center;
   margin-bottom: 1rem;
-  }
-  
-  .email {
+}
+
+.email {
   font-size: 0.9rem;
   color: #666;
-  }
-  
-  .action-buttons {
+}
+
+.action-buttons {
   display: flex;
   justify-content: center;
   margin: 1rem 0;
-  }
-  
-  .action-btn {
+}
+
+.action-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -418,63 +428,63 @@
   align-items: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  }
-  
-  .action-btn:hover {
+}
+
+.action-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 10px rgba(106, 48, 147, 0.3);
-  }
-  
-  .additional-options {
-  margin-top: 1rem;
+}
+
+.additional-options {
+  margin-top:  1rem;
   padding-top: 1rem;
   border-top: 1px solid #eee;
-  }
-  
-  .option {
+}
+
+.option {
   display: flex;
   align-items: center;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   color: #666;
-  }
-  
-  .option i {
+}
+
+.option i {
   margin-right: 0.5rem;
   color: #6a3093;
-  }
-  
-  .logout-btn {
+}
+
+.logout-btn {
   width: 100%;
   margin-top: 1rem;
   background: linear-gradient(45deg, #6a3093, #a044ff);
   border: none;
   color: white;
   padding: 0.5rem;
-  border-radius:  6px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  }
-  
-  .logout-btn:hover {
+}
+
+.logout-btn:hover {
   box-shadow: 0 4px 10px rgba(106, 48, 147, 0.3);
-  }
-  
-  .footer  {
+}
+
+.footer {
   background-color: #f8f9fa;
-  }
-  
-  .footer h5 {
+}
+
+.footer h5 {
   color: #6a3093;
-  }
-  
-  .footer .list-inline-item a {
+}
+
+.footer .list-inline-item a {
   color: #6a3093;
   font-size: 1.5rem;
   transition: color 0.3s ease;
-  }
-  
-  .footer .list-inline-item a:hover {
+}
+
+.footer .list-inline-item a:hover {
   color: #a044ff;
-  }
-  </style>
+}
+</style>

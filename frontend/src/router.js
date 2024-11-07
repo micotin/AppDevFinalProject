@@ -3,41 +3,52 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from './firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
-import LandingPage from './components/LandingPage.vue';
-import Login from './components/Login.vue';
-import Signup from './components/Signup.vue';
-import Verification from './components/Verification.vue';
-import UserCartFav from './components/UserCartFav.vue'; // New parent component for user layout
-import UserMain from './components/UserMain.vue'; // New parent component for user layout
-import UserHome from './components/UserHome.vue';
-import UserShop from './components/UserShop.vue';
-import UserAccount from './components/UserAccount.vue';
-import UserCustomize from './components/UserCustomize.vue';
-import UserProducts from './components/UserProducts.vue';
-import UserContactUs from './components/UserContactUs.vue';
-import AdminPanel from './components/AdminPanel.vue';
-import AdminDashboard from './components/AdminDashboard.vue';
-import AdminProducts from './components/AdminProducts.vue';
-import AdminUsers from './components/AdminUsers.vue';
+// Lazy-loaded components
+const LandingPage = () => import('./components/LandingPage.vue');
+const Login = () => import('./components/Login.vue');
+const Signup = () => import('./components/Signup.vue');
+const Verification = () => import('./components/Verification.vue');
+const UserCartFav = () => import('./components/UserCartFav.vue');
+const UserMain = () => import('./components/UserMain.vue');
+const UserHome = () => import('./components/UserHome.vue');
+const UserShop = () => import('./components/UserShop.vue');
+const UserAccount = () => import('./components/UserAccount.vue');
+const UserCustomize = () => import('./components/UserCustomize.vue');
+const UserProducts = () => import('./components/UserProducts.vue');
+const UserContactUs = () => import('./components/UserContactUs.vue');
+const UserCheckout = () => import('./components/UserCheckout.vue');
+const UserViewProduct = () => import('./components/UserViewProduct.vue');
+const UserOrder = () => import('./components/UserOrder.vue');
+const AdminPanel = () => import('./components/AdminPanel.vue');
+const AdminDashboard = () => import('./components/AdminDashboard.vue');
+const AdminProducts = () => import('./components/AdminProducts.vue');
+const AdminUsers = () => import('./components/AdminUsers.vue');
+const AdminOrders = () => import('./components/AdminOrders.vue');
+const AdminHistory = () => import('./components/AdminHistory.vue'); // New import for AdminHistory
+const NotFound = () => import('./components/NotFound.vue');
 
 const routes = [
-  { path: '/', component: LandingPage },
-  { path: '/login', component: Login },
-  { path: '/signup', component: Signup },
+  { path: '/', name: 'LandingPage', component: LandingPage },
+  { path: '/login', name: 'Login', component: Login },
+  { path: '/signup', name: 'Signup', component: Signup },
   { path: '/verification', name: 'Verification', component: Verification },
   
   {
     path: '/user',
-    component: UserMain, // UserMain as a parent layout for user pages
+    component: UserMain,
     meta: { requiresAuth: true, role: 'user' },
     children: [
-      { path: 'home', component: UserHome },
-      { path: 'account', component: UserAccount },
-      { path: 'customize', component: UserCustomize },
-      { path: 'products', component: UserProducts },
-      { path: 'contact', component: UserContactUs },
-      { path: 'shop', component: UserShop },
-      { path: 'cart-fav', component: UserCartFav }
+      { path: 'home', name: 'UserHome', component: UserHome },
+      { path: 'account', name: 'UserAccount', component: UserAccount },
+      { path: 'customize', name: 'UserCustomize', component: UserCustomize },
+      { path: 'products', name: 'UserProducts', component: UserProducts },
+      { path: 'contact', name: 'UserContactUs', component: UserContactUs },
+      { path: 'shop', name: 'UserShop', component: UserShop },
+      { path: 'cart-fav', name: 'UserCartFav', component: UserCartFav },
+      { path: 'product/:id', name: 'UserViewProduct', component: UserViewProduct },
+      { path: 'checkout', name: 'UserCheckout', component: UserCheckout },
+      { path: 'order', name: 'UserOrders', component: UserOrder },
+      { path: 'order/:orderId', name: 'UserOrder', component: UserOrder },
     ],
   },
 
@@ -47,11 +58,16 @@ const routes = [
     redirect: '/admin/dashboard',
     meta: { requiresAuth: true, role: 'admin' },
     children: [
-      { path: 'dashboard', component: AdminDashboard },
-      { path: 'products', component: AdminProducts },
-      { path: 'users', component: AdminUsers },
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
+      { path: 'products', name: 'AdminProducts', component: AdminProducts },
+      { path: 'users', name: 'AdminUsers', component: AdminUsers },
+      { path: 'orders', name: 'AdminOrders', component: AdminOrders },
+      { path: 'history', name: 'AdminHistory', component: AdminHistory }, // New route for AdminHistory
     ],
   },
+
+  // Catch-all 404
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound },
 ];
 
 const router = createRouter({
@@ -81,11 +97,11 @@ router.beforeEach(async (to, from, next) => {
   });
 
   if (requiresAuth && !auth.currentUser) {
-    return next({ path: '/login' });
+    return next({ name: 'Login' });
   } else if (requiresAuth && userRole) {
     const routeRole = to.meta.role;
     if (routeRole && userRole !== routeRole) {
-      return next(userRole === 'admin' ? '/admin/dashboard' : '/user/home');
+      return next(userRole === 'admin' ? { name: 'AdminDashboard' } : { name: 'UserHome' });
     } else {
       return next();
     }
