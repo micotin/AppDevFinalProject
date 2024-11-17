@@ -1,285 +1,353 @@
 <template>
-    <div class="contact-us">
-      <div class="hero-section">
-        <h1>Get in Touch</h1>
-        <p>We're here to help and answer any question you might have</p>
-      </div>
+  <div class="user-contact-us">
+    <div class="hero-section text-center text-white py-5 mb-5">
       <div class="container">
-        <div class="contact-container">
-          <div class="contact-info-container">
-            <div class="contact-info">
-              <h2>Contact Information</h2>
-              <div class="info-item">
-                <i class="bi bi-geo-alt"></i>
-                <p>Gov. Ignacio st. Lumangbayan 5200 Calapan, Philippines</p>
-              </div>
-              <div class="info-item">
-                <i class="bi bi-telephone"></i>
-                <p>(555) 123-4567</p>
-              </div>
-              <div class="info-item">
-                <i class="bi bi-envelope"></i>
-                <p>info@sam1flowershop.com</p>
-              </div>
+        <h1 class="display-4 fw-bold mb-3">Get in Touch</h1>
+        <p class="lead">We're here to help and answer any questions you might have.</p>
+      </div>
+    </div>
+
+    <div class="container mb-5">
+      <div class="row g-5">
+        <div class="col-lg-5">
+          <div class="contact-info bg-light p-4 rounded-3 shadow-sm">
+            <h2 class="h4 mb-4">Contact Information</h2>
+            <ul class="list-unstyled">
+              <li class="mb-3">
+                <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                Gov. Ignacio St., Lumangbayan 5200 Calapan, Philippines
+              </li>
+              <li class="mb-3">
+                <i class="bi bi-telephone-fill text-primary me-2"></i>
+                (555) 123-4567
+              </li>
+              <li class="mb-3">
+                <i class="bi bi-envelope-fill text-primary me-2"></i>
+                info@sam1flowershop.com
+              </li>
+            </ul>
+
+            <h3 class="h5 mb-3">Business Hours</h3>
+            <ul class="list-unstyled">
+              <li>Monday - Friday: 9:00 AM - 7:00 PM</li>
+              <li>Saturday: 10:00 AM - 6:00 PM</li>
+              <li>Sunday: Closed</li>
+              <li>Delivery: 10:00 AM - 6:00 PM (Mon-Sat)</li>
+            </ul>
+            <p class="mt-2">
+              <span :class="['badge', isOpen ? 'bg-success' : 'bg-danger']">
+                {{ isOpen ? 'Open Now' : 'Closed Now' }}
+              </span>
+            </p>
+
+            <h3 class="h5 mb-3">Follow Us</h3>
+            <div class="mb-4">
+              <a href="https://www.facebook.com/sam1flowershop" target="_blank" class="text-primary me-3 fs-4">
+                <i class="bi bi-facebook"></i>
+              </a>
+              <a href="https://www.instagram.com/sam1flowershop" target="_blank" class="text-primary fs-4">
+                <i class="bi bi-instagram"></i>
+              </a>
             </div>
-            <div class="business-hours">
-              <h3>Business Hours</h3>
-              <ul>
-                <li><span>Monday - Friday:</span> 9:00 AM - 7:00 PM</li>
-                <li><span>Saturday:</span> 10:00 AM - 6:00 PM</li>
-                <li><span>Sunday:</span> Closed</li>
-              </ul>
-              <p><strong>Delivery Hours:</strong> 10:00 AM - 6:00 PM (Monday - Saturday)</p>
-            </div>
-          </div>
-          <div class="contact-form-container">
-            <h2>Send us a message</h2>
-            <form @submit.prevent="submitForm" class="contact-form">
-              <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" v-model="form.name" required>
-              </div>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" v-model="form.email" readonly>
-              </div>
-              <div class="form-group">
-                <label for="inquiryType">Inquiry Type</label>
-                <select id="inquiryType" v-model="form.inquiryType" required>
-                  <option value="">Select an option</option>
-                  <option value="order">Order Inquiry</option>
-                  <option value="general">General Question</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="message">Message</label>
-                <textarea id="message" v-model="form.message" rows="5" required></textarea>
-              </div>
-              <button type="submit" class="submit-btn">Send Message</button>
-            </form>
           </div>
         </div>
-        <div class="map-container">
-          <h2>Our Location</h2>
-          <div id="map"></div>
-          <a href="https://www.google.com/maps/search/?api=1&query=Gov.+Ignacio+st.+Lumangbayan+5200+Calapan,+Philippines" target="_blank" class="directions-btn">
-            <i class="bi bi-geo-alt"></i> Get Directions
+
+        <div class="col-lg-7">
+          <h2 class="h3 mb-4">Send us a message</h2>
+          <form @submit.prevent="submitForm" class="needs-validation" novalidate>
+            <div class="mb-3">
+              <label for="name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="name" v-model="form.name" required>
+              <div class="invalid-feedback">Please provide your name.</div>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" v-model="form.email" required>
+              <div class="invalid-feedback">Please provide a valid email.</div>
+            </div>
+            <div class="mb-3">
+              <label for="inquiryType" class="form-label">Inquiry Type</label>
+              <select class="form-select" id="inquiryType" v-model="form.inquiryType" required>
+                <option value="">Select an option</option>
+                <option value="order">Order Inquiry</option>
+                <option value="general">General Question</option>
+                <option value="feedback">Feedback</option>
+                <option value="complaint">Complaint</option>
+              </select>
+              <div class="invalid-feedback">Please select an inquiry type.</div>
+            </div>
+            <div class="mb-3">
+              <label for="message" class="form-label">Message</label>
+              <textarea class="form-control" id="message" rows="5" v-model="form.message" required></textarea>
+              <div class="invalid-feedback">Please enter your message.</div>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="terms" v-model="form.terms" required>
+              <label class="form-check-label" for="terms">I agree to the terms and conditions</label>
+              <div class="invalid-feedback">You must agree before submitting.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" :disabled="isSubmitting">
+              {{ isSubmitting ? 'Sending...' : 'Send Message' }}
+            </button>
+          </form>
+          <div v-if="successMessage" class="alert alert-success mt-3" role="alert">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
+        </div>
+      </div>
+
+      <div class="row mt-5">
+        <div class="col-12">
+          <h2 class="h3 mb-4">Our Location</h2>
+          <div id="map" class="map-container mb-3"></div>
+          <a href="https://www.google.com/maps/search/?api=1&query=Gov.+Ignacio+st.+Lumangbayan+5200+Calapan,+Philippines" 
+             target="_blank" 
+             class="btn btn-outline-primary">
+            <i class="bi bi-geo-alt-fill me-2"></i>
+            Get Directions
           </a>
         </div>
       </div>
+
+      <div class="row mt-5" v-if="user">
+        <div class="col-12">
+          <h2 class="h3 mb-4">Your Inquiry History</h2>
+          <button class="btn btn-primary mb-3" @click="showInquiryHistory">View Inquiry History</button>
+        </div>
+      </div>
     </div>
-  </template>
-  
-  <script>
-  import { ref, onMounted } from 'vue';
-  import { getAuth } from 'firebase/auth';
-  import { collection, addDoc } from 'firebase/firestore';
-  import { db } from '../firebaseConfig';
-  import L from 'leaflet';
-  import 'leaflet/dist/leaflet.css';
-  
-  export default {
-    name: 'UserContactUs',
-    setup() {
-      const form = ref({
-        name: '',
-        email: '',
-        inquiryType: '',
-        message: ''
-      });
-  
-      const submitForm = async () => {
-        try {
-          const docRef = await addDoc(collection(db, 'inquiries'), form.value);
-          console.log('Inquiry sent with ID: ', docRef.id);
-          alert('Your message has been sent successfully!');
-          form.value = { ...form.value, name: '', inquiryType: '', message: '' };
-        } catch (error) {
-          console.error('Error sending inquiry: ', error);
-          alert('An error occurred while sending your message. Please try again.');
-        }
-      };
-  
-      onMounted(() => {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (user) {
-          form.value.email = user.email;
-        } else {
-          // Set a default email if user is not authenticated
-          form.value.email = 'guest@example.com';
-        }
-  
-        const map = L.map('map').setView([13.4105, 121.1817], 15);
-  
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-  
-        L.marker([13.4105, 121.1817]).addTo(map)
-          .bindPopup('SAM1 Flower Shop<br>Gov. Ignacio st. Lumangbayan 5200 Calapan, Philippines')
-          .openPopup();
-      });
-  
-      return {
-        form,
-        submitForm
-      };
-    }
+
+    <!-- Inquiry History Modal -->
+    <div class="modal fade" id="inquiryHistoryModal" tabindex="-1" aria-labelledby="inquiryHistoryModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="inquiryHistoryModalLabel">Your Inquiry History</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="userInquiries.length === 0" class="text-center">
+              <p>You haven't made any inquiries yet.</p>
+            </div>
+            <div v-else class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="inquiry in userInquiries" :key="inquiry.id">
+                    <td>{{ formatDate(inquiry.createdAt) }}</td>
+                    <td>{{ inquiry.inquiryType }}</td>
+                    <td>{{ truncateMessage(inquiry.message) }}</td>
+                    <td>
+                      <span :class="getStatusBadgeClass(inquiry.status)">
+                        {{ inquiry.status }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { getAuth } from 'firebase/auth';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import L from 'leaflet';
+import { Modal } from 'bootstrap';
+
+const form = ref({
+  name: '',
+  email: '',
+  inquiryType: '',
+  message: '',
+  terms: false
+});
+
+const successMessage = ref('');
+const errorMessage = ref('');
+const isSubmitting = ref(false);
+const user = ref(null);
+const userInquiries = ref([]);
+
+const isOpen = computed(() => {
+  const now = new Date();
+  const day = now.getDay();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const currentTime = hours * 60 + minutes;
+
+  if (day === 0) return false; // Sunday: Closed
+
+  if (day >= 1 && day <= 5) { // Monday to Friday
+    return currentTime >= 9 * 60 && currentTime < 19 * 60;
+  }
+
+  if (day === 6) { // Saturday
+    return currentTime >= 10 * 60 && currentTime < 18 * 60;
+  }
+
+  return false;
+});
+
+const submitForm = async () => {
+  if (isSubmitting.value) return;
+
+  isSubmitting.value = true;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  try {
+    const docRef = await addDoc(collection(db, 'inquiries'), {
+      ...form.value,
+      createdAt: serverTimestamp(),
+      status: 'new',
+      userId: user.value ? user.value.uid : 'guest'
+    });
+    console.log('Inquiry sent with ID: ', docRef.id);
+    successMessage.value = 'Your message has been sent successfully!';
+    form.value = { name: '', email: '', inquiryType: '', message: '', terms: false };
+    fetchUserInquiries();
+  } catch (error) {
+    console.error('Error sending inquiry: ', error);
+    errorMessage.value = 'An error occurred while sending your message. Please try again.';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const fetchUserInquiries = async () => {
+  if (user.value) {
+    const q = query(
+      collection(db, 'inquiries'),
+      where('userId', '==', user.value.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    userInquiries.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  }
+};
+
+const showInquiryHistory = () => {
+  const modal = new Modal(document.getElementById('inquiryHistoryModal'));
+  modal.show();
+};
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  return new Date(timestamp.seconds * 1000).toLocaleString();
+};
+
+const truncateMessage = (message, length = 50) => {
+  return message.length > length ? message.substring(0, length) + '...' : message;
+};
+
+const getStatusBadgeClass = (status) => {
+  const classes = {
+    new: 'bg-info',
+    'in-progress': 'bg-warning',
+    resolved: 'bg-success'
   };
-  </script>
-  
-  <style scoped>
-  .contact-us {
-    font-family: 'Arial', sans-serif;
+  return `badge ${classes[status] || 'bg-secondary'}`;
+};
+
+onMounted(() => {
+  const auth = getAuth();
+  user.value = auth.currentUser;
+  if (user.value) {
+    form.value.email = user.value.email;
+    form.value.name = user.value.displayName || '';
+    fetchUserInquiries();
   }
-  
-  .hero-section {
-    background: linear-gradient(135deg, #6a3093 0%, #a044ff 100%);
-    color: white;
-    text-align: center;
-    padding: 4rem 0;
-    margin-bottom: 3rem;
-  }
-  
-  .hero-section h1 {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-  
-  .hero-section p {
-    font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-  }
-  
-  .contact-container {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 3rem;
-  }
-  
-  .contact-info-container, .contact-form-container {
-    flex: 1;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-  }
-  
-  .contact-info h2, .contact-form-container h2 {
-    color: #6a3093;
-    margin-bottom: 1.5rem;
-  }
-  
-  .info-item {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-  }
-  
-  .info-item i {
-    color: #6a3093;
-    font-size: 1.2rem;
-    margin-right: 1rem;
-    margin-top: 0.2rem;
-  }
-  
-  .business-hours {
-    margin-top: 2rem;
-  }
-  
-  .business-hours h3 {
-    color: #6a3093;
-    margin-bottom: 1rem;
-  }
-  
-  .business-hours ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .business-hours li {
-    margin-bottom: 0.5rem;
-  }
-  
-  .business-hours li span {
-    font-weight: bold;
-  }
-  
-  .contact-form .form-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  .contact-form label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #333;
-  }
-  
-  .contact-form input,
-  .contact-form select,
-  .contact-form textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
-  }
-  
-  .contact-form input[readonly] {
-    background-color: #f0f0f0;
-    cursor: not-allowed;
-  }
-  
-  .submit-btn, .directions-btn {
-    background: linear-gradient(135deg, #6a3093 0%, #a044ff 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  
-  .submit-btn:hover, .directions-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(106, 48, 147, 0.3);
-  }
-  
-  .map-container {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-  }
-  
-  .map-container h2 {
-    color: #6a3093;
-    margin-bottom: 1.5rem;
-  }
-  
-  #map {
-    height: 400px;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-  }
-  
-  .directions-btn {
-    display: inline-block;
-    text-decoration: none;
-  }
-  
-  @media (max-width: 768px) {
-    .contact-container {
-      flex-direction: column;
-    }
-  }
-  </style>
+
+  const map = L.map('map').setView([13.4105, 121.1817], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+  L.marker([13.4105, 121.1817]).addTo(map)
+    .bindPopup('SAM1 Flower Shop<br>Gov. Ignacio st. Lumangbayan 5200 Calapan, Philippines')
+    .openPopup();
+
+  // Enable Bootstrap form validation
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+
+  // Update open/closed status every minute
+  setInterval(() => {
+    isOpen.value = isOpen.value;
+  }, 60000);
+});
+</script>
+
+<style scoped>
+.user-contact-us {
+  font-family: 'Poppins', sans-serif;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #6a3093 0%, #a044ff 100%);
+}
+
+.map-container {
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background-color: #6a3093;
+  border-color: #6a3093;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #a044ff;
+  border-color: #a044ff;
+}
+
+.btn-outline-primary {
+  color: #6a3093;
+  border-color: #6a3093;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background-color: #6a3093;
+  color: white;
+}
+
+.text-primary {
+  color: #6a3093 !important;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #a044ff;
+  box-shadow: 0 0 0 0.25rem rgba(160, 68, 255, 0.25);
+}
+
+.contact-info {
+  border-left: 4px solid #6a3093;
+}
+
+.badge {
+  font-size: 0.9em;
+  padding: 0.5em 0.7em;
+}
+</style>

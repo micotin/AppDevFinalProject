@@ -19,12 +19,17 @@ const UserContactUs = () => import('./components/UserContactUs.vue');
 const UserCheckout = () => import('./components/UserCheckout.vue');
 const UserViewProduct = () => import('./components/UserViewProduct.vue');
 const UserOrder = () => import('./components/UserOrder.vue');
+const UserGallery = () => import('./components/UserGallery.vue');
+const UserViewGallery = () => import('./components/UserViewGallery.vue');
 const AdminPanel = () => import('./components/AdminPanel.vue');
 const AdminDashboard = () => import('./components/AdminDashboard.vue');
 const AdminProducts = () => import('./components/AdminProducts.vue');
 const AdminUsers = () => import('./components/AdminUsers.vue');
 const AdminOrders = () => import('./components/AdminOrders.vue');
-const AdminHistory = () => import('./components/AdminHistory.vue'); // New import for AdminHistory
+const AdminHistory = () => import('./components/AdminHistory.vue');
+const AdminContactUs = () => import('./components/AdminContactUs.vue');
+const AdminGallery = () => import('./components/AdminGallery.vue');
+const AdminCustomizeAttachment = () => import('./components/AdminCustomizeAttachment.vue');
 const NotFound = () => import('./components/NotFound.vue');
 
 const routes = [
@@ -49,20 +54,24 @@ const routes = [
       { path: 'checkout', name: 'UserCheckout', component: UserCheckout },
       { path: 'order', name: 'UserOrders', component: UserOrder },
       { path: 'order/:orderId', name: 'UserOrder', component: UserOrder },
+      { path: 'gallery', name: 'UserGallery', component: UserGallery },
+      { path: 'gallery/:id', name: 'UserViewGallery', component: UserViewGallery },
     ],
   },
 
   {
     path: '/admin',
     component: AdminPanel,
-    redirect: '/admin/dashboard',
     meta: { requiresAuth: true, role: 'admin' },
     children: [
       { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
       { path: 'products', name: 'AdminProducts', component: AdminProducts },
       { path: 'users', name: 'AdminUsers', component: AdminUsers },
       { path: 'orders', name: 'AdminOrders', component: AdminOrders },
-      { path: 'history', name: 'AdminHistory', component: AdminHistory }, // New route for AdminHistory
+      { path: 'history', name: 'AdminHistory', component: AdminHistory },
+      { path: 'contact', name: 'AdminContactUs', component: AdminContactUs },
+      { path: 'gallery', name: 'AdminGallery', component: AdminGallery },
+      { path: 'customize-attachment', name: 'AdminCustomizeAttachment', component: AdminCustomizeAttachment },
     ],
   },
 

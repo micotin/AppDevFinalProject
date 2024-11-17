@@ -36,12 +36,12 @@
                 <div v-for="item in cart" :key="item.id" class="card mb-3 border-0 shadow-sm hover-effect">
                   <div class="row g-0">
                     <div class="col-md-3 col-lg-2">
-                      <img :src="item.product.imageUrl" class="img-fluid rounded-start h-100 object-fit-cover" :alt="item.product.name">
+                      <img :src="item.product?.imageUrl || '/placeholder.svg'" class="img-fluid rounded-start h-100 object-fit-cover" :alt="item.product?.name || 'Product image'">
                     </div>
                     <div class="col-md-6 col-lg-7">
                       <div class="card-body">
-                        <h5 class="card-title fw-bold">{{ item.product.name }}</h5>
-                        <p class="card-text d-none d-md-block text-muted">{{ item.product.description }}</p>
+                        <h5 class="card-title fw-bold">{{ item.product?.name || 'Product name' }}</h5>
+                        <p class="card-text d-none d-md-block text-muted">{{ item.product?.description || 'Product description' }}</p>
                         <div class="d-flex align-items-center mt-2">
                           <button @click="decreaseQuantity(item)" class="btn btn-outline-primary btn-sm" :disabled="item.quantity <= 1">
                             <i class="bi bi-dash"></i>
@@ -54,7 +54,7 @@
                       </div>
                     </div>
                     <div class="col-md-3 col-lg-3 d-flex flex-column justify-content-center align-items-end p-3">
-                      <p class="price mb-2 fw-bold">₱{{ (item.product.price * item.quantity).toFixed(2) }}</p>
+                      <p class="price mb-2 fw-bold">₱{{ ((item.product?.price || 0) * item.quantity).toFixed(2) }}</p>
                       <button @click="removeFromCart(item)" class="btn btn-outline-danger btn-sm">
                         <i class="bi bi-trash me-1"></i> Remove
                       </button>
@@ -91,13 +91,13 @@
               <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <div v-for="product in favorites" :key="product.id" class="col">
                   <div class="card h-100 border-0 shadow-sm product-card hover-effect">
-                    <img :src="product.imageUrl" class="card-img-top" :alt="product.name">
+                    <img :src="product.imageUrl || '/placeholder.svg'" class="card-img-top" :alt="product.name || 'Product image'">
                     <div class="card-body d-flex flex-column">
-                      <h5 class="card-title fw-bold">{{ product.name }}</h5>
-                      <p class="card-text flex-grow-1 text-muted">{{ product.description }}</p>
+                      <h5 class="card-title fw-bold">{{ product.name || 'Product name' }}</h5>
+                      <p class="card-text flex-grow-1 text-muted">{{ product.description || 'Product description' }}</p>
                       <div class="mt-auto">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                          <span class="price fw-bold">₱{{ product.price.toFixed(2) }}</span>
+                          <span class="price fw-bold">₱{{ (product.price || 0).toFixed(2) }}</span>
                           <button @click="removeFavorite(product)" class="btn btn-outline-danger btn-sm">
                             <i class="bi bi-heart-fill me-1"></i> Remove
                           </button>
@@ -137,6 +137,7 @@ import { useRouter } from 'vue-router'
 import { getAuth } from 'firebase/auth'
 import { db } from '../firebaseConfig'
 import { collection, getDocs, doc, deleteDoc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
+import { Toast } from 'bootstrap'
 
 export default {
   name: 'UserCartFav',
@@ -180,7 +181,7 @@ export default {
           const productsMap = new Map(productsSnapshot.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() }]))
           cart.value = cartItems.map(item => ({
             ...item,
-            product: productsMap.get(item.productId)
+            product: productsMap.get(item.productId) || { id: item.productId, name: 'Unknown Product', price: 0, description: 'Product not found' }
           }))
           loadingCart.value = false
         } catch (err) {
@@ -273,23 +274,21 @@ export default {
     }
 
     const cartTotal = computed(() => {
-      return cart.value.reduce((total, item) => total + (item.product.price * item.quantity), 0)
+      return cart.value.reduce((total, item) => total + ((item.product?.price || 0) * item.quantity), 0)
     })
 
     const cartItemCount = computed(() => {
       return cart.value.reduce((total, item) => total + item.quantity, 0)
     })
 
-    const checkout = () => 
-
- {
+    const checkout = () => {
       router.push('/user/checkout')
     }
 
     const showToast = (message) => {
       toastMessage.value = message
       const toastEl = document.getElementById('liveToast')
-      const toast = new bootstrap.Toast(toastEl)
+      const toast = new Toast(toastEl)
       toast.show()
     }
 
@@ -298,7 +297,6 @@ export default {
       fetchCart()
     })
 
-    // Watch for changes in the cart and update the UI
     watch(cart, () => {
       // This will trigger a re-render when the cart changes
     }, { deep: true })

@@ -2,7 +2,7 @@
   <div class="user-main d-flex flex-column min-vh-100">
     <!-- Header -->
     <header class="header">
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
           <!-- Brand -->
           <router-link class="navbar-brand" to="/">
@@ -32,7 +32,7 @@
                 </router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/gallery" active-class="active">
+                <router-link class="nav-link" to="/user/gallery" active-class="active">
                   <i class="bi bi-images me-1"></i> Gallery
                 </router-link>
               </li>
@@ -63,26 +63,30 @@
                 @click="toggleDropdown"
                 aria-expanded="false"
               >
-                <span class="profile-name">{{ userName }}</span>
+                <img 
+                  :src="userProfileImage || defaultImage" 
+                  :alt="userName"
+                  class="avatar-image-small"
+                  @error="handleImageError"
+                />
               </a>
               <div class="dropdown-menu dropdown-menu-end profile-dropdown" :class="{ show: isDropdownOpen }">
-                <div class="dropdown-header">
-                  <span>{{ userName }}</span>
-                  <button class="edit-button" @click="editProfile">
-                    <i class="bi bi-pencil"></i>
-                  </button>
+                <div class="profile-header">
+                  {{ userName }}
                 </div>
                 <div class="profile-content">
                   <div class="avatar-container">
-                    <img 
-                      :src="userProfileImage || defaultImage" 
-                      :alt="userName"
-                      class="avatar-image"
-                      @error="handleImageError"
-                    />
+                    <div class="avatar-wrapper">
+                      <img 
+                        :src="userProfileImage || defaultImage" 
+                        :alt="userName"
+                        class="avatar-image"
+                        @error="handleImageError"
+                      />
+                    </div>
                   </div>
                   <div class="email-container">
-                    <div class="email">{{ userEmail }}</div>
+                    {{ userEmail }}
                   </div>
                   <div class="action-buttons">
                     <button class="action-btn" title="Cart" @click="goToCartFav">
@@ -95,24 +99,27 @@
                       <i class="bi bi-gear"></i>
                     </button>
                   </div>
-                  <div class="additional-options">
-                    <div class="option">
+                  <div class="user-info">
+                    <div class="info-item">
                       <i class="bi bi-person-check"></i>
-                      Member since {{ memberSince }}
+                      <span>Member since {{ memberSince }}</span>
                     </div>
-                    <div class="option">
+                    <div class="info-item">
                       <i class="bi bi-clock-history"></i>
-                      Last login {{ lastLogin }}
+                      <span>Last login {{ lastLogin }}</span>
                     </div>
                   </div>
-                  <button @click="logout" class="logout-btn">Logout</button>
+                  <button @click="logout" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                  </button>
                 </div>
               </div>
             </div>
   
             <!-- Login Button for Non-Authenticated Users -->
             <div v-else>
-              <router-link to="/login" class="btn btn-primary login-btn">
+              <router-link to="/login" class="btn login-btn">
                 <i class="bi bi-person me-1"></i> Login
               </router-link>
             </div>
@@ -121,13 +128,13 @@
       </nav>
     </header>
   
-    <!-- Main Content Area for Child Routes -->
+    <!-- Main Content Area -->
     <main class="main-content container flex-grow-1">
       <router-view />
     </main>
   
     <!-- Footer -->
-    <footer class="footer mt-auto py-4 bg-light">
+    <footer class="footer mt-auto py-4">
       <div class="container">
         <div class="row">
           <div class="col-md-4 mb-3 mb-md-0">
@@ -137,25 +144,25 @@
           <div class="col-md-4 mb-3 mb-md-0">
             <h5 class="text-uppercase mb-3">Quick Links</h5>
             <ul class="list-unstyled">
-              <li><router-link to="/about" class="text-decoration-none">About Us</router-link></li>
-              <li><router-link to="/gallery" class="text-decoration-none">Gallery</router-link></li>
-              <li><router-link to="/customize" class="text-decoration-none">Customize Bouquet</router-link></li>
-              <li><router-link to="/contact" class="text-decoration-none">Contact Us</router-link></li>
+              <li><router-link to="/about" class="footer-link">About Us</router-link></li>
+              <li><router-link to="/user/gallery" class="footer-link">Gallery</router-link></li>
+              <li><router-link to="/user/customize" class="footer-link">Customize Bouquet</router-link></li>
+              <li><router-link to="/user/contact" class="footer-link">Contact Us</router-link></li>
             </ul>
           </div>
           <div class="col-md-4">
             <h5 class="text-uppercase mb-3">Connect With Us</h5>
             <ul class="list-inline mb-0">
-              <li class="list-inline-item"><a href="#" class="text-decoration-none"><i class="bi bi-facebook"></i></a></li>
-              <li class="list-inline-item"><a href="#" class="text-decoration-none"><i class="bi bi-instagram"></i></a></li>
-              <li class="list-inline-item"><a href="#" class="text-decoration-none"><i class="bi bi-twitter"></i></a></li>
-              <li class="list-inline-item"><a href="#" class="text-decoration-none"><i class="bi bi-pinterest"></i></a></li>
+              <li class="list-inline-item"><a href="#" class="social-link"><i class="bi bi-facebook"></i></a></li>
+              <li class="list-inline-item"><a href="#" class="social-link"><i class="bi bi-instagram"></i></a></li>
+              <li class="list-inline-item"><a href="#" class="social-link"><i class="bi bi-twitter"></i></a></li>
+              <li class="list-inline-item"><a href="#" class="social-link"><i class="bi bi-pinterest"></i></a></li>
             </ul>
           </div>
         </div>
         <hr class="my-4">
         <div class="text-center">
-          <span class="text-muted">&copy; 2024 SAM1 Flower Shop. All rights reserved.</span>
+          <span class="copyright">&copy; 2024 SAM1 Flower Shop. All rights reserved.</span>
         </div>
       </div>
     </footer>
@@ -295,13 +302,12 @@ export default {
 };
 </script>
 
-
-
 <style scoped>
 .user-main {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: #f8f9fa;
 }
 
 .header {
@@ -310,7 +316,11 @@ export default {
   top: 0;
   z-index: 1000;
   background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.navbar {
+  padding: 0.75rem 0;
 }
 
 .main-content {
@@ -325,7 +335,7 @@ export default {
 }
 
 .brand-text {
-  background: linear-gradient(45deg, #6a3093, #a044ff);
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -334,157 +344,241 @@ export default {
   font-weight: 500;
   color: #4a4a4a;
   transition: all 0.3s ease;
-  position: relative;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
 }
 
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(45deg, #6a3093, #a044ff);
-  transition: all 0.3s ease;
-  transform: translateX(-50%);
+.nav-link:hover {
+  color: #8e44ad;
 }
 
-.nav-link:hover::after,
-.nav-link.active::after {
-  width: 100%;
+.nav-link.active {
+  color: #8e44ad;
+  background-color: rgba(142, 68, 173, 0.1);
 }
 
-.profile-dropdown {
-  width: 300px;
+.profile-toggle {
   padding: 0;
-  border: none;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #fff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  margin-top: 0.5rem;
-}
-
-.dropdown-header {
-  background: linear-gradient(45deg, #6a3093, #a044ff);
-  color: white;
-  padding: 1rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
 }
 
-.edit-button {
-  background: none;
+.avatar-image-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #8e44ad;
+  transition: transform 0.3s ease;
+}
+
+.avatar-image-small:hover {
+  transform: scale(1.1);
+}
+
+.profile-dropdown {
+  width: 320px;
+  padding: 0;
   border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-top: 0.75rem;
+  animation: slideIn 0.3s ease;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  right: 0;
+  left: auto;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-header {
+  background-color: #8e44ad;
   color: white;
-  cursor: pointer;
+  padding: 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .profile-content {
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .avatar-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
 }
 
 .avatar-image {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #6a3093;
+  border: 4px solid white;
 }
 
 .email-container {
   text-align: center;
-  margin-bottom: 1rem;
-}
-
-.email {
-  font-size: 0.9rem;
   color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
 }
 
 .action-buttons {
   display: flex;
   justify-content: center;
-  margin: 1rem 0;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #6a3093, #a044ff);
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
   border: none;
   color: white;
-  margin: 0 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 1.25rem;
 }
 
 .action-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(106, 48, 147, 0.3);
+  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
 }
 
-.additional-options {
-  margin-top:  1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+.user-info {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.option {
+.info-item {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  gap: 0.75rem;
   color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
-.option i {
-  margin-right: 0.5rem;
-  color: #6a3093;
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item i {
+  color: #8e44ad;
+  font-size: 1.1rem;
 }
 
 .logout-btn {
   width: 100%;
-  margin-top: 1rem;
-  background: linear-gradient(45deg, #6a3093, #a044ff);
+  padding: 0.75rem;
   border: none;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
   color: white;
-  padding: 0.5rem;
-  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-  box-shadow: 0 4px 10px rgba(106, 48, 147, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+}
+
+.login-btn {
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
 }
 
 .footer {
-  background-color: #f8f9fa;
+  background-color: white;
+  border-top: 1px solid #eee;
+  color: #666;
 }
 
 .footer h5 {
-  color: #6a3093;
+  color: #8e44ad;
+  font-weight: 600;
 }
 
-.footer .list-inline-item a {
-  color: #6a3093;
-  font-size: 1.5rem;
+.footer-link {
+  color: #666;
+  text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.footer .list-inline-item a:hover {
-  color: #a044ff;
+.footer-link:hover {
+  color: #8e44ad;
+}
+
+.social-link {
+  color: #8e44ad;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  color: #9b59b6;
+  transform: translateY(-2px);
+}
+
+.copyright {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 991.98px) {
+  .profile-dropdown {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    left: auto;
+    width: 320px;
+    margin: 0;
+  }
 }
 </style>
