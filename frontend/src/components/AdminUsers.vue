@@ -1,12 +1,12 @@
 <template>
-  <div class="admin-users container-fluid py-4">
-    <h2 class="mb-4 text-primary">
+  <div class="admin-users">
+    <h2 class="mb-4 text-white">
       <i class="bi bi-people-fill me-2"></i>Manage Users
     </h2>
 
-    <div class="card shadow">
+    <div class="card shadow-sm">
       <div class="card-body">
-        <ul class="nav nav-pills mb-3">
+        <ul class="nav nav-pills mb-4">
           <li class="nav-item">
             <a class="nav-link" :class="{ active: activeTab === 'verified' }" @click.prevent="activeTab = 'verified'" href="#">Verified Users</a>
           </li>
@@ -20,7 +20,7 @@
 
         <div class="table-responsive">
           <table class="table table-hover">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th>Name</th>
                 <th>Email</th>
@@ -38,7 +38,7 @@
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary me-2" @click="viewUserDetails(user)">
+                  <button class="btn btn-sm btn-outline-light me-2" @click="viewUserDetails(user)">
                     <i class="bi bi-eye"></i> View
                   </button>
                   <button 
@@ -78,7 +78,7 @@
     <div class="modal fade" :class="{ show: isUserDetailsModalVisible }" tabindex="-1" role="dialog" :style="{ display: isUserDetailsModalVisible ? 'block' : 'none' }">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
+          <div class="modal-header">
             <h5 class="modal-title"><i class="bi bi-info-circle-fill me-2"></i>User Details</h5>
             <button type="button" class="btn-close btn-close-white" @click="closeUserDetailsModal"></button>
           </div>
@@ -102,9 +102,9 @@
     <div class="modal fade" :class="{ show: isConfirmationModalVisible }" tabindex="-1" role="dialog" :style="{ display: isConfirmationModalVisible ? 'block' : 'none' }">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <div class="modal-header bg-warning text-dark">
+          <div class="modal-header">
             <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Promotion</h5>
-            <button type="button" class="btn-close" @click="closeConfirmationModal"></button>
+            <button type="button" class="btn-close btn-close-white" @click="closeConfirmationModal"></button>
           </div>
           <div class="modal-body">
             <p>Are you sure you want to promote {{ userToPromote?.firstName }} {{ userToPromote?.lastName }} to admin?</p>
@@ -262,31 +262,44 @@ export default {
 
 <style scoped>
 .admin-users {
-  background-color: #f8f9fa;
+  font-family: 'Poppins', sans-serif;
+  color: #ffffff;
 }
 
 .card {
-  border-radius: 0.5rem;
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .nav-pills .nav-link {
-  color: #495057;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 0.25rem;
   margin-right: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .nav-pills .nav-link.active {
-  background-color: #0d6efd;
-  color: white;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .nav-pills .nav-link:hover:not(.active) {
-  background-color: #e9ecef;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.table {
+  color: #ffffff;
 }
 
 .table th {
   font-weight: 600;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table td {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-sm {
@@ -294,12 +307,17 @@ export default {
 }
 
 .modal-content {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
 }
 
 .modal-header {
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .badge {
@@ -308,17 +326,40 @@ export default {
 }
 
 .pagination .page-link {
-  color: #0d6efd;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   border-radius: 0.25rem;
   margin: 0 0.125rem;
 }
 
 .pagination .page-item.active .page-link {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .pagination .page-item.disabled .page-link {
-  color: #6c757d;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 </style>

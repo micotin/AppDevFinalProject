@@ -1,188 +1,171 @@
 <template>
   <div class="admin-products">
-    <h2 class="mb-4 text-primary"><i class="bi bi-flower3 me-2"></i>Product Management</h2>
+    <h2 class="page-title"><i class="bi bi-snow2 me-2"></i>Product Management</h2>
 
-    <div class="row g-4">
-      <!-- Featured Products Section -->
-      <div class="col-12 mb-4">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="card-header bg-primary text-white py-3">
-            <h5 class="card-title mb-0"><i class="bi bi-star-fill me-2"></i>Featured Products</h5>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th class="py-3">Image</th>
-                    <th class="py-3">Name</th>
-                    <th class="py-3">Price</th>
-                    <th class="py-3">Category</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="product in featuredProducts" :key="product.id">
-                    <td class="py-3"><img :src="product.imageUrl" :alt="product.name" class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;"></td>
-                    <td class="py-3">{{ product.name }}</td>
-                    <td class="py-3">₱{{ product.price.toFixed(2) }}</td>
-                    <td class="py-3"><span :class="['badge', getCategoryClass(product.category)]">{{ product.category }}</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+    <div class="notification-container">
+      <transition-group name="notification">
+        <div v-for="notif in notifications" :key="notif.id" class="notification" :class="notif.type">
+          {{ notif.message }}
         </div>
-      </div>
-
-      <!-- Product List -->
-      <div class="col-lg-8 mb-4">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="card-header bg-primary text-white py-3">
-            <h5 class="card-title mb-0"><i class="bi bi-list-ul me-2"></i>Product List</h5>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                  <tr>
-                    <th class="py-3">Image</th>
-                    <th class="py-3">Name</th>
-                    <th class="py-3">Price</th>
-                    <th class="py-3">Category</th>
-                    <th class="py-3">Featured</th>
-                    <th class="py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="product in products" :key="product.id">
-                    <td class="py-3"><img :src="product.imageUrl" :alt="product.name" class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;"></td>
-                    <td class="py-3">{{ product.name }}</td>
-                    <td class="py-3">₱{{ product.price.toFixed(2) }}</td>
-                    <td class="py-3"><span :class="['badge', getCategoryClass(product.category)]">{{ product.category }}</span></td>
-                    <td class="py-3">
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" v-model="product.featured" @change="toggleFeatured(product)">
-                      </div>
-                    </td>
-                    <td class="py-3">
-                      <button class="btn btn-sm btn-outline-primary me-1" @click="editProduct(product)"><i class="bi bi-pencil"></i></button>
-                      <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(product)"><i class="bi bi-trash"></i></button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add / Edit Product Form -->
-      <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="card-header bg-primary text-white py-3">
-            <h5 class="card-title mb-0"><i class="bi" :class="editMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i> {{ editMode ? 'Edit' : 'Add' }} Product</h5>
-          </div>
-          <div class="card-body">
-            <form @submit.prevent="editMode ? updateProduct() : addProduct()">
-              <div class="mb-3">
-                <label for="name" class="form-label">Product Name</label>
-                <input type="text" class="form-control" id="name" v-model="product.name" required>
-              </div>
-              <div class="mb-3">
-                <label for="price" class="form-label">Price (₱)</label>
-                <input type="number" class="form-control" id="price" v-model="product.price" step="0.01" required>
-              </div>
-              <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" v-model="product.description" rows="3" required></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="category" class="form-label">Event Category</label>
-                <select class="form-select" id="category" v-model="product.category" required>
-                  <option disabled value="">Select an event category</option>
-                  <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="imageUrl" class="form-label">Image</label>
-                <input type="file" class="form-control" id="imageUrl" @change="handleImageUpload" accept="image/*">
-              </div>
-              <div class="d-grid">
-                <button type="submit" class="btn btn-primary">{{ editMode ? 'Update' : 'Add' }} Product</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
+      </transition-group>
     </div>
 
-    <!-- Loading Modal -->
-    <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-body text-center py-4">
-            <div class="spinner-border text-primary mb-3" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <h5 id="loadingModalLabel">{{ loadingMessage }}</h5>
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item">
+            <button class="nav-link" :class="{ active: activeTab === 'featured' }" @click="setActiveTab('featured')">
+              <i class="bi bi-star-fill me-2"></i>Featured Products
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{ active: activeTab === 'all-products' }" @click="setActiveTab('all-products')">
+              <i class="bi bi-grid me-2"></i>All Products
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" :class="{ active: activeTab === 'add-edit' }" @click="setActiveTab('add-edit')">
+              <i class="bi" :class="editMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+              {{ editMode ? 'Edit' : 'Add' }} Product
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <!-- Featured Products Tab -->
+        <div v-show="activeTab === 'featured'" class="tab-pane">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Category</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="product in featuredProducts" :key="product.id">
+                  <td>
+                    <img :src="product.imageUrl" :alt="product.name" class="product-image">
+                  </td>
+                  <td>{{ product.name }}</td>
+                  <td>₱{{ product.price.toFixed(2) }}</td>
+                  <td>
+                    <span :class="['badge', getCategoryClass(product.category)]">
+                      {{ product.category }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" @click="editProduct(product)">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(product)">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Success Modal -->
-    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-body text-center py-4">
-            <i class="bi bi-check-circle text-success display-1 mb-3"></i>
-            <h5 id="successModalLabel">{{ successMessage }}</h5>
+        <!-- All Products Tab -->
+        <div v-show="activeTab === 'all-products'" class="tab-pane">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Category</th>
+                  <th>Featured</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="product in products" :key="product.id">
+                  <td>
+                    <img :src="product.imageUrl" :alt="product.name" class="product-image">
+                  </td>
+                  <td>{{ product.name }}</td>
+                  <td>₱{{ product.price.toFixed(2) }}</td>
+                  <td>
+                    <span :class="['badge', getCategoryClass(product.category)]">
+                      {{ product.category }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" v-model="product.featured" @change="toggleFeatured(product)">
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" @click="editProduct(product)">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(product)">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
+        </div>
+
+        <!-- Add/Edit Product Tab -->
+        <div v-show="activeTab === 'add-edit'" class="tab-pane">
+          <form @submit.prevent="editMode ? updateProduct() : addProduct()">
+            <div class="mb-3">
+              <label for="name" class="form-label">Product Name</label>
+              <input type="text" class="form-control" id="name" v-model="product.name" required>
+            </div>
+            <div class="mb-3">
+              <label for="price" class="form-label">Price (₱)</label>
+              <input type="number" class="form-control" id="price" v-model="product.price" step="0.01" required>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" v-model="product.description" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="category" class="form-label">Event Category</label>
+              <select class="form-select" id="category" v-model="product.category" required>
+                <option disabled value="">Select an event category</option>
+                <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="imageUrl" class="form-label">Image</label>
+              <input type="file" class="form-control" id="imageUrl" @change="handleImageUpload" accept="image/*">
+            </div>
+            <div class="mb-3 form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="featured" v-model="product.featured">
+              <label class="form-check-label" for="featured">Featured Product</label>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ editMode ? 'Update' : 'Add' }} Product</button>
+          </form>
         </div>
       </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             Are you sure you want to delete this product?
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="initiateDelete">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete Countdown Modal -->
-    <div class="modal fade" id="deleteCountdownModal" tabindex="-1" aria-labelledby="deleteCountdownModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-body text-center py-4">
-            <h5 id="deleteCountdownModalLabel">Deleting product in</h5>
-            <div class="countdown-circle my-3">
-              <svg width="100" height="100" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#e9ecef" stroke-width="10" />
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#dc3545" stroke-width="10"
-                        stroke-dasharray="283" :stroke-dashoffset="deleteCountdownProgress" />
-                <text x="50" y="50" text-anchor="middle" dy=".3em" font-size="24">{{ deleteCountdown }}</text>
-              </svg>
-            </div>
-            <p>Click cancel to stop the deletion</p>
-          </div>
-          <div class="modal-footer justify-content-center">
-            <button type="button" class="btn btn-secondary" @click="cancelDelete">Cancel</button>
-            <button type="button" class="btn btn-danger" @click="confirmDeleteNow">Delete Now</button>
+            <button type="button" class="btn btn-danger" @click="deleteProduct">Delete</button>
           </div>
         </div>
       </div>
@@ -192,10 +175,10 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import { db, storage } from '../firebaseConfig';
+import { db, storage } from '@/firebaseConfig';
 import { Modal } from 'bootstrap';
 
 export default {
@@ -215,22 +198,13 @@ export default {
     const editMode = ref(false);
     const currentProductId = ref(null);
     const selectedImage = ref(null);
-    const loadingMessage = ref('');
-    const successMessage = ref('');
+    const notifications = ref([]);
+    const notificationId = ref(0);
+    const activeTab = ref('featured');
     const productToDelete = ref(null);
-    const deleteCountdown = ref(15);
-    const deleteCountdownInterval = ref(null);
+    const deleteModal = ref(null);
 
     const auth = getAuth();
-
-    const loadingModal = ref(null);
-    const successModal = ref(null);
-    const deleteModal = ref(null);
-    const deleteCountdownModal = ref(null);
-
-    const deleteCountdownProgress = computed(() => {
-      return 283 - (283 * deleteCountdown.value) / 15;
-    });
 
     const getCategoryClass = (category) => {
       const classes = {
@@ -246,38 +220,40 @@ export default {
       return classes[category] || 'bg-info';
     };
 
-    const showLoading = (message) => {
-      loadingMessage.value = message;
-      loadingModal.value.show();
+    const showNotification = (message, type = 'success') => {
+      const id = notificationId.value++;
+      notifications.value.push({ id, message, type });
+      setTimeout(() => {
+        notifications.value = notifications.value.filter(n => n.id !== id);
+      }, 5000);
     };
 
-    const hideLoading = () => {
-      loadingModal.value.hide();
-    };
-
-    const showSuccess = (message) => {
-      successMessage.value = message;
-      successModal.value.show();
+    const setActiveTab = (tab) => {
+      activeTab.value = tab;
     };
 
     const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      products.value = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      featuredProducts.value = products.value.filter(product => product.featured);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'products'));
+        products.value = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        featuredProducts.value = products.value.filter(product => product.featured);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        showNotification('Error fetching products. Please try again.', 'error');
+      }
     };
 
     const addProduct = async () => {
       if (selectedImage.value) {
-        showLoading('Adding product...');
         try {
           const storageReference = storageRef(storage, 'productImages/' + selectedImage.value.name);
           await uploadBytes(storageReference, selectedImage.value);
           const imageUrl = await getDownloadURL(storageReference);
 
-          const newProduct = await addDoc(collection(db, 'products'), {
+          await addDoc(collection(db, 'products'), {
             ...product.value,
             imageUrl,
             timestamp: serverTimestamp()
@@ -292,18 +268,16 @@ export default {
 
           await fetchProducts();
           clearForm();
-          hideLoading();
-          showSuccess('Product added successfully!');
+          showNotification('Product added successfully!');
+          setActiveTab('all-products');
         } catch (error) {
           console.error('Error adding product:', error);
-          hideLoading();
-          // Show error message to user
+          showNotification('Error adding product. Please try again.', 'error');
         }
       }
     };
 
     const updateProduct = async () => {
-      showLoading('Updating product...');
       try {
         let imageUrl = product.value.imageUrl;
         if (selectedImage.value) {
@@ -327,12 +301,11 @@ export default {
 
         await fetchProducts();
         clearForm();
-        hideLoading();
-        showSuccess('Product updated successfully!');
+        showNotification('Product updated successfully!');
+        setActiveTab('all-products');
       } catch (error) {
         console.error('Error updating product:', error);
-        hideLoading();
-        // Show error message to user
+        showNotification('Error updating product. Please try again.', 'error');
       }
     };
 
@@ -341,32 +314,7 @@ export default {
       deleteModal.value.show();
     };
 
-    const initiateDelete = () => {
-      deleteModal.value.hide();
-      deleteCountdown.value = 15;
-      deleteCountdownModal.value.show();
-      deleteCountdownInterval.value = setInterval(() => {
-        deleteCountdown.value--;
-        if (deleteCountdown.value === 0) {
-          clearInterval(deleteCountdownInterval.value);
-          deleteProduct();
-        }
-      }, 1000);
-    };
-
-    const cancelDelete = () => {
-      clearInterval(deleteCountdownInterval.value);
-      deleteCountdownModal.value.hide();
-    };
-
-    const confirmDeleteNow = () => {
-      clearInterval(deleteCountdownInterval.value);
-      deleteProduct();
-    };
-
     const deleteProduct = async () => {
-      deleteCountdownModal.value.hide();
-      showLoading('Deleting product...');
       try {
         await deleteDoc(doc(db, 'products', productToDelete.value.id));
 
@@ -378,12 +326,12 @@ export default {
         });
 
         await fetchProducts();
-        hideLoading();
-        showSuccess('Product deleted successfully!');
+        deleteModal.value.hide();
+        showNotification('Product deleted successfully!');
+        setActiveTab('all-products');
       } catch (error) {
         console.error('Error deleting product:', error);
-        hideLoading();
-        // Show error message to user
+        showNotification('Error deleting product. Please try again.', 'error');
       }
     };
 
@@ -402,35 +350,40 @@ export default {
       };
       selectedImage.value = null;
       editMode.value = false;
+      currentProductId.value = null;
     };
 
     const editProduct = (productToEdit) => {
       product.value = { ...productToEdit };
       currentProductId.value = productToEdit.id;
       editMode.value = true;
+      setActiveTab('add-edit');
     };
 
     const toggleFeatured = async (productToToggle) => {
-      await updateDoc(doc(db, 'products', productToToggle.id), {
-        featured: productToToggle.featured
-      });
+      try {
+        await updateDoc(doc(db, 'products', productToToggle.id), {
+          featured: productToToggle.featured
+        });
 
-      await addDoc(collection(db, 'adminHistory'), {
-        adminEmail: auth.currentUser.email,
-        action: productToToggle.featured ? 'Featured product' : 'Unfeatured product',
-        productName: productToToggle.name,
-        timestamp: serverTimestamp()
-      });
+        await addDoc(collection(db, 'adminHistory'), {
+          adminEmail: auth.currentUser.email,
+          action: productToToggle.featured ? 'Featured product' : 'Unfeatured product',
+          productName: productToToggle.name,
+          timestamp: serverTimestamp()
+        });
 
-      await fetchProducts();
+        await fetchProducts();
+        showNotification(`Product ${productToToggle.featured ? 'featured' : 'unfeatured'} successfully!`);
+      } catch (error) {
+        console.error('Error toggling featured status:', error);
+        showNotification('Error updating product feature status. Please try again.', 'error');
+      }
     };
 
     onMounted(() => {
       fetchProducts();
-      loadingModal.value = new Modal(document.getElementById('loadingModal'));
-      successModal.value = new Modal(document.getElementById('successModal'));
-      deleteModal.value = new Modal(document.getElementById('deleteModal'));
-      deleteCountdownModal.value = new Modal(document.getElementById('deleteCountdownModal'));
+      deleteModal.value = new Modal(document.getElementById('deleteConfirmationModal'));
     });
 
     return {
@@ -448,13 +401,9 @@ export default {
       editProduct,
       toggleFeatured,
       getCategoryClass,
-      loadingMessage,
-      successMessage,
-      initiateDelete,
-      cancelDelete,
-      confirmDeleteNow,
-      deleteCountdown,
-      deleteCountdownProgress
+      notifications,
+      activeTab,
+      setActiveTab
     };
   }
 };
@@ -462,59 +411,107 @@ export default {
 
 <style scoped>
 .admin-products {
-  font-family: Arial, sans-serif;
+  padding: 20px;
 }
 
-.table th {
-  background-color: #f8f9fa;
+.page-title {
+  margin-bottom: 20px;
+  color: #333;
 }
 
-.table td {
-  vertical-align: middle;
+.card {
+  background-color: #fff;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
-  background-color: #0d6efd;
+  background-color: #f8f9fa;
+  border-bottom: none;
 }
 
-.card-body {
-  background-color: #fff;
+.nav-tabs {
+  border-bottom: none;
 }
 
-.btn-outline-danger,
-.btn-outline-primary {
+.nav-link {
+  color: #495057;
   border: none;
-  color: #6c757d;
+  padding: 10px 15px;
 }
 
-.btn-outline-danger:hover,
-.btn-outline-primary:hover {
-  color: #fff;
-  background-color: #6c757d;
+.nav-link:hover {
+  color: #007bff;
 }
 
-.modal-content {
-  border-radius: 8px;
+.nav-link.active {
+  color: #007bff;
+  background-color: #fff;
+  border-bottom: 2px solid #007bff;
 }
 
-.form-check-input {
-  cursor: pointer;
+.table {
+  margin-bottom: 0;
 }
 
-.form-select {
-  margin-top: 5px;
+.product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
 }
 
-.countdown-circle {
-  position: relative;
+.badge {
+  font-size: 0.8rem;
+  padding: 0.4em 0.6em;
 }
 
-.countdown-circle svg {
-  transform: rotate(-90deg);
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
-.countdown-circle text {
-  font-weight: bold;
-  fill: #dc3545;
+.notification {
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.notification.success {
+  background-color: #28a745;
+}
+
+.notification.error {
+  background-color: #dc3545;
+}
+
+.notification-enter-active, .notification-leave-active {
+  transition: all 0.5s ease;
+}
+
+.notification-enter-from, .notification-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+@media (max-width: 768px) {
+  .admin-products {
+    padding: 10px;
+  }
+
+  .card-header {
+    padding: 10px;
+  }
+
+  .nav-link {
+    padding: 8px 12px;
+  }
 }
 </style>
+

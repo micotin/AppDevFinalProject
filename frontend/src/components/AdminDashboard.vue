@@ -2,23 +2,33 @@
   <div class="admin-dashboard">
     <h2 class="mb-4">🌺 Admin Dashboard</h2>
 
-    <div class="row">
+    <div class="row g-4">
       <!-- Summary Cards -->
-      <div class="col-md-3 mb-4" v-for="(stat, index) in stats" :key="index">
-        <div class="card border-0 shadow-sm rounded">
-          <div class="card-body text-center">
-            <component :is="stat.icon" class="fs-1 mb-2 floral-icon" />
-            <h5 class="card-title">{{ stat.title }}</h5>
-            <p class="card-text fs-4 fw-bold">{{ stat.value }}</p>
+      <div class="col-md-3 col-sm-6" v-for="(stat, index) in stats" :key="index">
+        <div class="card h-100 border-0 shadow-sm rounded">
+          <div class="card-body text-center d-flex flex-column justify-content-center">
+            <component :is="stat.icon" class="mb-3 floral-icon" :size="32" />
+            <h5 class="card-title mb-2">{{ stat.title }}</h5>
+            <p class="card-text fs-4 fw-bold mb-0">{{ stat.value }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Sales Chart -->
-      <div class="col-md-8 mb-4">
-        <div class="card border-0 shadow-sm rounded">
-          <div class="card-header bg-light floral-header">
+      <!-- Sales Overview Chart -->
+      <div class="col-lg-8 col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded">
+          <div class="card-header bg-dark floral-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">📊 Sales Overview</h5>
+            <div class="btn-group">
+              <button 
+                v-for="period in ['Week', 'Month', 'Year']" 
+                :key="period"
+                @click="changeSalesPeriod(period.toLowerCase())"
+                :class="['btn btn-sm', salesPeriod === period.toLowerCase() ? 'floral-btn' : 'btn-outline-secondary']"
+              >
+                {{ period }}
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <canvas ref="salesChart"></canvas>
@@ -26,23 +36,24 @@
         </div>
       </div>
 
-      <!-- Product Categories Pie Chart -->
-      <div class="col-md-4 mb-4">
-        <div class="card border-0 shadow-sm rounded">
-          <div class="card-header bg-light floral-header">
-            <h5 class="card-title mb-0">🥧 Product Categories</h5>
+      <!-- Order Status Chart -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded">
+          <div class="card-header bg-dark floral-header">
+            <h5 class="card-title mb-0">🥧 Order Status Distribution</h5>
           </div>
           <div class="card-body">
-            <canvas ref="categoriesChart"></canvas>
+            <canvas ref="orderStatusChart"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Recent Orders -->
-      <div class="col-md-6 mb-4">
-        <div class="card border-0 shadow-sm rounded">
-          <div class="card-header bg-light floral-header">
+      <div class="col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded">
+          <div class="card-header bg-dark floral-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">🌷 Recent Orders</h5>
+            <button class="btn btn-sm floral-btn" @click="refreshOrders">Refresh</button>
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -58,10 +69,10 @@
                 <tbody>
                   <tr v-for="order in recentOrders" :key="order.id">
                     <td>#{{ order.id.slice(0, 8) }}</td>
-                    <td>{{ order.customerName }}</td>
+                    <td>{{ `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}` }}</td>
                     <td>₱{{ order.total.toFixed(2) }}</td>
                     <td>
-                      <span :class="'badge ' + getStatusClass(order.status)">
+                      <span :class="['badge', getStatusClass(order.status)]">
                         {{ order.status }}
                       </span>
                     </td>
@@ -74,10 +85,11 @@
       </div>
 
       <!-- Top Products -->
-      <div class="col-md-6 mb-4">
-        <div class="card border-0 shadow-sm rounded">
-          <div class="card-header bg-light floral-header">
+      <div class="col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded">
+          <div class="card-header bg-dark floral-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">🌹 Top Products</h5>
+            <button class="btn btn-sm floral-btn" @click="refreshProducts">Refresh</button>
           </div>
           <div class="card-body">
             <div class="table-responsive">
@@ -108,8 +120,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { getFirestore, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Chart, registerables } from 'chart.js';
 import { ShoppingCart, DollarSign, Package, Users } from 'lucide-vue-next';
@@ -126,46 +138,68 @@ const stats = ref([
 const recentOrders = ref([]);
 const topProducts = ref([]);
 const salesChart = ref(null);
-const categoriesChart = ref(null);
+const orderStatusChart = ref(null);
+const salesPeriod = ref('week');
+
+let salesChartInstance = null;
+let orderStatusChartInstance = null;
 
 const fetchDashboardData = async () => {
-  const ordersSnapshot = await getDocs(collection(db, 'orders'));
+  const ordersQuery = query(collection(db, 'orders'));
+  const ordersSnapshot = await getDocs(ordersQuery);
+  
   const productsSnapshot = await getDocs(collection(db, 'products'));
-  const usersSnapshot = await getDocs(collection(db, 'users'));
+  
+  const usersQuery = query(collection(db, 'users'), where('role', '!=', 'admin'));
+  const usersSnapshot = await getDocs(usersQuery);
 
   let totalRevenue = 0;
+  let totalOrders = 0;
   ordersSnapshot.forEach(doc => {
-    totalRevenue += doc.data().total;
+    const orderData = doc.data();
+    if (orderData.status !== 'Cancelled') {
+      totalRevenue += orderData.total;
+      totalOrders++;
+    }
   });
 
-  stats.value[0].value = ordersSnapshot.size;
+  stats.value[0].value = totalOrders;
   stats.value[1].value = `₱${totalRevenue.toFixed(2)}`;
   stats.value[2].value = productsSnapshot.size;
   stats.value[3].value = usersSnapshot.size;
 
-  // Fetch recent orders
-  const recentOrdersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5));
+  await refreshOrders();
+  await refreshProducts();
+
+  // Prepare data for charts
+  const salesData = await prepareSalesData();
+  const orderStatusData = await prepareOrderStatusData();
+
+  // Create or update charts
+  createOrUpdateSalesChart(salesData);
+  createOrUpdateOrderStatusChart(orderStatusData);
+};
+
+const refreshOrders = async () => {
+  const recentOrdersQuery = query(
+    collection(db, 'orders'),
+    orderBy('createdAt', 'desc'),
+    limit(5)
+  );
   const recentOrdersSnapshot = await getDocs(recentOrdersQuery);
   recentOrders.value = recentOrdersSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   }));
+};
 
-  // Fetch top products
+const refreshProducts = async () => {
   const topProductsQuery = query(collection(db, 'products'), orderBy('sales', 'desc'), limit(5));
   const topProductsSnapshot = await getDocs(topProductsQuery);
   topProducts.value = topProductsSnapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   }));
-
-  // Prepare data for charts
-  const salesData = await prepareSalesData();
-  const categoriesData = await prepareCategoriesData();
-
-  // Create charts
-  createSalesChart(salesData);
-  createCategoriesChart(categoriesData);
 };
 
 const getStatusClass = (status) => {
@@ -173,18 +207,44 @@ const getStatusClass = (status) => {
     case 'completed': return 'bg-success';
     case 'processing': return 'bg-warning text-dark';
     case 'cancelled': return 'bg-danger';
+    case 'picked up': return 'bg-info';
     default: return 'bg-secondary';
   }
 };
 
 const prepareSalesData = async () => {
-  const salesQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(30));
+  const now = new Date();
+  let startDate;
+
+  switch (salesPeriod.value) {
+    case 'week':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+      break;
+    case 'month':
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      break;
+    case 'year':
+      startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      break;
+    default:
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+  }
+
+  const salesQuery = query(
+    collection(db, 'orders'),
+    where('createdAt', '>=', Timestamp.fromDate(startDate)),
+    orderBy('createdAt', 'asc')
+  );
+
   const salesSnapshot = await getDocs(salesQuery);
   const salesByDate = {};
 
   salesSnapshot.forEach(doc => {
-    const date = new Date(doc.data().createdAt.seconds * 1000).toLocaleDateString();
-    salesByDate[date] = (salesByDate[date] || 0) + doc.data().total;
+    const orderData = doc.data();
+    if (orderData.status !== 'Cancelled') {
+      const date = new Date(orderData.createdAt.seconds * 1000).toLocaleDateString();
+      salesByDate[date] = (salesByDate[date] || 0) + orderData.total;
+    }
   });
 
   return {
@@ -193,134 +253,220 @@ const prepareSalesData = async () => {
   };
 };
 
-const prepareCategoriesData = async () => {
-  const productsSnapshot = await getDocs(collection(db, 'products'));
-  const categories = {};
+const prepareOrderStatusData = async () => {
+  const ordersSnapshot = await getDocs(collection(db, 'orders'));
+  const statusCounts = {};
 
-  productsSnapshot.forEach(doc => {
-    const category = doc.data().category;
-    categories[category] = (categories[category] || 0) + 1;
+  ordersSnapshot.forEach(doc => {
+    const status = doc.data().status;
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
   return {
-    labels: Object.keys(categories),
-    data: Object.values(categories)
+    labels: Object.keys(statusCounts),
+    data: Object.values(statusCounts)
   };
 };
 
-const createSalesChart = (salesData) => {
+const createOrUpdateSalesChart = (salesData) => {
   const ctx = salesChart.value.getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: salesData.labels,
-      datasets: [{
-        label: 'Daily Sales',
-        data: salesData.data,
-        borderColor: '#FF69B4',
-        backgroundColor: 'rgba(255, 105, 180, 0.1)',
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Sales (₱)'
+
+  if (salesChartInstance) {
+    salesChartInstance.data.labels = salesData.labels;
+    salesChartInstance.data.datasets[0].data = salesData.data;
+    salesChartInstance.update();
+  } else {
+    salesChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: salesData.labels,
+        datasets: [{
+          label: 'Sales',
+          data: salesData.data,
+          borderColor: '#e5484d',
+          backgroundColor: 'rgba(229, 72, 77, 0.1)',
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Sales (₱)',
+              color: '#b4b4bb'
+            },
+            ticks: {
+              color: '#b4b4bb'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
+          x: {
+            ticks: {
+              color: '#b4b4bb'
+            },
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#b4b4bb'
+            }
           }
         }
       }
-    }
-  });
+    });
+  }
 };
 
-const createCategoriesChart = (categoriesData) => {
-  const ctx = categoriesChart.value.getContext('2d');
-  new Chart(ctx, {
-    type: 'pie',
-    data: {
-      labels: categoriesData.labels,
-      datasets: [{
-        data: categoriesData.data,
-        backgroundColor: [
-          '#FF69B4', '#FFB6C1', '#FFC0CB', '#FF1493', '#DB7093',
-          '#C71585', '#FFA07A', '#FF7F50', '#FF6347', '#FF4500'
-        ]
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'right'
+const createOrUpdateOrderStatusChart = (orderStatusData) => {
+  const ctx = orderStatusChart.value.getContext('2d');
+
+  if (orderStatusChartInstance) {
+    orderStatusChartInstance.data.labels = orderStatusData.labels;
+    orderStatusChartInstance.data.datasets[0].data = orderStatusData.data;
+    orderStatusChartInstance.update();
+  } else {
+    orderStatusChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: orderStatusData.labels,
+        datasets: [{
+          data: orderStatusData.data,
+          backgroundColor: [
+            '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6c757d'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              color: '#b4b4bb'
+            }
+          }
         }
       }
-    }
-  });
+    });
+  }
 };
 
-onMounted(fetchDashboardData);
+const changeSalesPeriod = async (period) => {
+  salesPeriod.value = period;
+  await fetchDashboardData();
+};
+
+onMounted(() => {
+  fetchDashboardData();
+});
+
+onUnmounted(() => {
+  if (salesChartInstance) {
+    salesChartInstance.destroy();
+  }
+  if (orderStatusChartInstance) {
+    orderStatusChartInstance.destroy();
+  }
+});
 </script>
 
 <style scoped>
 .admin-dashboard {
-  padding: 20px;
-  background-color: #f7f7f7;
-  border-radius: 15px;
+  font-family: 'Poppins', sans-serif;
 }
 
 h2 {
-  font-family: 'Poppins', sans-serif;
   font-weight: 600;
-  color: #5c5c5c;
+  color: #ffffff;
 }
 
 .card {
-  border-radius: 12px;
-  transition: box-shadow 0.3s;
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.3s, transform 0.3s;
 }
 
 .card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+}
+
+.card-body {
+  color: #b4b4bb;
 }
 
 .floral-header {
-  background-color: #FDE2E4;
+  background: rgba(40, 40, 55, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .floral-icon {
-  color: #FF69B4;
+  color: #e5484d;
 }
 
 .floral-table {
-  border-radius: 12px;
-  overflow: hidden;
+  color: #b4b4bb;
+}
+
+.floral-table thead th {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .floral-table tbody tr:hover {
-  background-color: rgba(0, 173, 85, 0.05);
+  background-color: rgba(229, 72, 77, 0.1);
 }
 
 .floral-btn {
-  background-color: #FFB6C1;
-  border-color: #FFB6C1;
+  background: linear-gradient(135deg, #e5484d 0%, #a12c82 100%);
+  border: none;
   color: white;
+  transition: all 0.3s ease;
 }
 
 .floral-btn:hover {
-  background-color: #FF69B4;
-  border-color: #FF69B4;
+  background: linear-gradient(135deg, #f05a5f 0%, #b13d93 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(229, 72, 77, 0.3);
 }
 
 .floral-badge {
-  background-color: #FCE4EC;
-  color: #D81B60;
+  background-color: rgba(229, 72, 77, 0.2);
+  color: #e5484d;
 }
 
 .badge {
   font-weight: 500;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 </style>

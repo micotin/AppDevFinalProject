@@ -6,7 +6,6 @@
         <div class="container">
           <!-- Brand -->
           <router-link class="navbar-brand" to="/">
-            <i class="bi bi-flower1 me-2"></i>
             <span class="brand-text">SAM1 Flower Shop</span>
           </router-link>
   
@@ -27,29 +26,22 @@
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
               <li class="nav-item">
-                <router-link class="nav-link" to="/user/home" active-class="active">
-                  <i class="bi bi-house-door me-1"></i> Home
-                </router-link>
+                <router-link class="nav-link" to="/user/home" active-class="active">Home</router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/user/gallery" active-class="active">
-                  <i class="bi bi-images me-1"></i> Gallery
-                </router-link>
+                <router-link class="nav-link" to="/user/gallery" active-class="active">Gallery</router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/user/customize" active-class="active">
-                  <i class="bi bi-palette me-1"></i> Customize Bouquet
-                </router-link>
+                <router-link class="nav-link" to="/user/customize" active-class="active">Customize</router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/user/shop" active-class="active">
-                  <i class="bi bi-shop me-1"></i> Shop
-                </router-link>
+                <router-link class="nav-link" to="/user/shop" active-class="active">Shop</router-link>
               </li>
               <li class="nav-item">
-                <router-link class="nav-link" to="/user/contact" active-class="active">
-                  <i class="bi bi-envelope me-1"></i> Contact Us
-                </router-link>
+                <router-link class="nav-link" to="/user/contact" active-class="active">Contact</router-link>
+              </li>
+              <li class="nav-item">
+                <router-link class="nav-link" to="/user/reviews" active-class="active">Reviews</router-link>
               </li>
             </ul>
   
@@ -63,65 +55,60 @@
                 @click="toggleDropdown"
                 aria-expanded="false"
               >
-                <img 
-                  :src="userProfileImage || defaultImage" 
-                  :alt="userName"
-                  class="avatar-image-small"
-                  @error="handleImageError"
-                />
+                <div v-if="userProfileImage" class="avatar-small">
+                  <img 
+                    :src="userProfileImage" 
+                    :alt="userName"
+                    @error="handleImageError"
+                  />
+                </div>
+                <div v-else class="avatar-small initials-avatar">
+                  {{ userInitials }}
+                </div>
               </a>
-              <div class="dropdown-menu dropdown-menu-end profile-dropdown" :class="{ show: isDropdownOpen }">
-                <div class="profile-header">
-                  {{ userName }}
+              <div class="dropdown-menu dropdown-menu-start profile-dropdown" :class="{ show: isDropdownOpen }">
+                <div class="dropdown-header">
+                  <h3>Welcome, {{ userName }}</h3>
+                  <p>{{ userEmail }}</p>
                 </div>
-                <div class="profile-content">
-                  <div class="avatar-container">
-                    <div class="avatar-wrapper">
-                      <img 
-                        :src="userProfileImage || defaultImage" 
-                        :alt="userName"
-                        class="avatar-image"
-                        @error="handleImageError"
-                      />
-                    </div>
+                
+                <div class="dropdown-divider"></div>
+                
+                <router-link to="/user/cart-fav" class="dropdown-item" @click="closeDropdown">
+                  <i class="bi bi-cart3"></i>
+                  My Cart
+                </router-link>
+                
+                <router-link to="/user/order" class="dropdown-item" @click="closeDropdown">
+                  <i class="bi bi-bag"></i>
+                  View Orders
+                </router-link>
+                
+                <router-link to="/user/account" class="dropdown-item" @click="closeDropdown">
+                  <i class="bi bi-gear"></i>
+                  Manage Account
+                </router-link>
+                
+                <div class="dropdown-divider"></div>
+                
+                <div class="dropdown-info">
+                  <div class="info-item">
+                    <i class="bi bi-calendar3"></i>
+                    Member since {{ memberSince }}
                   </div>
-                  <div class="email-container">
-                    {{ userEmail }}
+                  <div class="info-item">
+                    <i class="bi bi-clock"></i>
+                    Last logged in: {{ lastLogin }}
                   </div>
-                  <div class="action-buttons">
-                    <button class="action-btn" title="Cart" @click="goToCartFav">
-                      <i class="bi bi-cart"></i>
-                    </button>
-                    <button class="action-btn" title="Orders" @click="goToOrders">
-                      <i class="bi bi-bag"></i>
-                    </button>
-                    <button class="action-btn" title="Account Settings" @click="goToAccount">
-                      <i class="bi bi-gear"></i>
-                    </button>
-                  </div>
-                  <div class="user-info">
-                    <div class="info-item">
-                      <i class="bi bi-person-check"></i>
-                      <span>Member since {{ memberSince }}</span>
-                    </div>
-                    <div class="info-item">
-                      <i class="bi bi-clock-history"></i>
-                      <span>Last login {{ lastLogin }}</span>
-                    </div>
-                  </div>
-                  <button @click="logout" class="logout-btn">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Logout</span>
-                  </button>
                 </div>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="logout" class="dropdown-item logout-item">
+                  <i class="bi bi-box-arrow-right"></i>
+                  Logout
+                </button>
               </div>
-            </div>
-  
-            <!-- Login Button for Non-Authenticated Users -->
-            <div v-else>
-              <router-link to="/login" class="btn login-btn">
-                <i class="bi bi-person me-1"></i> Login
-              </router-link>
             </div>
           </div>
         </div>
@@ -170,7 +157,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -189,6 +176,12 @@ export default {
     const memberSince = ref('');
     const lastLogin = ref('');
 
+    const userInitials = computed(() => {
+      if (!userName.value) return '';
+      const names = userName.value.split(' ');
+      return names.map(name => name.charAt(0).toUpperCase()).join('');
+    });
+
     const handleImageError = (e) => {
       e.target.src = defaultImage;
     };
@@ -201,26 +194,6 @@ export default {
       isDropdownOpen.value = false;
     };
 
-    const editProfile = () => {
-      router.push('/user/account');
-      closeDropdown();
-    };
-
-    const goToAccount = () => {
-      router.push('/user/account');
-      closeDropdown();
-    };
-
-    const goToCartFav = () => {
-      router.push('/user/cart-fav');
-      closeDropdown();
-    };
-
-    const goToOrders = () => {
-      router.push('/user/order');
-      closeDropdown();
-    };
-
     const fetchUserProfile = async (user) => {
       try {
         const userRef = doc(db, 'users', user.uid);
@@ -230,7 +203,7 @@ export default {
           const userData = userDoc.data();
           userName.value = `${userData.firstName} ${userData.lastName}`;
           userEmail.value = userData.email;
-          userProfileImage.value = userData.profileImage || defaultImage;
+          userProfileImage.value = userData.profileImage || '';
           memberSince.value = new Date(user.metadata.creationTime).toLocaleDateString();
           lastLogin.value = new Date(user.metadata.lastSignInTime).toLocaleString();
         }
@@ -289,13 +262,10 @@ export default {
       isDropdownOpen,
       memberSince,
       lastLogin,
+      userInitials,
       handleImageError,
       toggleDropdown,
       closeDropdown,
-      editProfile,
-      goToAccount,
-      goToCartFav,
-      goToOrders,
       logout,
     };
   },
@@ -363,17 +333,29 @@ export default {
   align-items: center;
 }
 
-.avatar-image-small {
+.avatar-small {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  object-fit: cover;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
   border: 2px solid #8e44ad;
-  transition: transform 0.3s ease;
 }
 
-.avatar-image-small:hover {
-  transform: scale(1.1);
+.avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials-avatar {
+  background: linear-gradient(45deg, #8e44ad, #9b59b6);
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
 }
 
 .profile-dropdown {
@@ -386,10 +368,8 @@ export default {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   margin-top: 0.75rem;
   animation: slideIn 0.3s ease;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  right: 0;
-  left: auto;
+  left: auto !important;
+  right: 0 !important;
 }
 
 @keyframes slideIn {
@@ -403,81 +383,46 @@ export default {
   }
 }
 
-.profile-header {
+.dropdown-header {
   background-color: #8e44ad;
   color: white;
   padding: 1.25rem;
+}
+
+.dropdown-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  text-align: center;
+  margin: 0 0 0.25rem 0;
 }
 
-.profile-content {
-  padding: 1.5rem;
+.dropdown-header p {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.8;
 }
 
-.avatar-container {
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  color: #333;
   display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-.avatar-wrapper {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  padding: 4px;
-  background: linear-gradient(45deg, #8e44ad, #9b59b6);
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid white;
-}
-
-.email-container {
-  text-align: center;
-  color: #666;
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.action-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  background: linear-gradient(45deg, #8e44ad, #9b59b6);
-  border: none;
-  color: white;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1.25rem;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
 }
 
-.action-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+.dropdown-item i {
+  font-size: 1.1rem;
+  color: #8e44ad;
 }
 
-.user-info {
+.dropdown-item:hover {
   background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  color: #8e44ad;
+}
+
+.dropdown-info {
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
 }
 
 .info-item {
@@ -485,8 +430,8 @@ export default {
   align-items: center;
   gap: 0.75rem;
   color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 
 .info-item:last-child {
@@ -495,43 +440,24 @@ export default {
 
 .info-item i {
   color: #8e44ad;
-  font-size: 1.1rem;
 }
 
-.logout-btn {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(45deg, #8e44ad, #9b59b6);
-  color: white;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.logout-item {
+  color: #dc3545;
 }
 
-.logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+.logout-item i {
+  color: #dc3545;
 }
 
-.login-btn {
-  background: linear-gradient(45deg, #8e44ad, #9b59b6);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
+.logout-item:hover {
+  background-color: #fff5f5;
+  color: #dc3545;
 }
 
-.login-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+.dropdown-divider {
+  margin: 0;
+  border-top: 1px solid #eee;
 }
 
 .footer {
@@ -573,10 +499,10 @@ export default {
 
 @media (max-width: 991.98px) {
   .profile-dropdown {
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    left: auto;
+    position: absolute;
+    top: 100%;
+    left: 0 !important;
+    right: auto !important;
     width: 320px;
     margin: 0;
   }

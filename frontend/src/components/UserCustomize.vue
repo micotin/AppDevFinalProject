@@ -1,10 +1,10 @@
 <template>
-  <div class="bouquet-customizer bg-light min-vh-100" @keydown="handleKeydown" tabindex="0">
+  <div class="user-customize bg-light" @keydown="handleKeydown" tabindex="0">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
           <i class="bi bi-flower1 me-2"></i>
-          Bouquet Customizer Pro
+          Flower Customizer
         </a>
         <div class="d-flex align-items-center">
           <button class="btn btn-outline-light me-2" @click="undo" :disabled="!canUndo">
@@ -47,47 +47,23 @@
 
           <div class="card mt-3">
             <div class="card-body">
-              <h5 class="card-title mb-3">Elements</h5>
+              <h5 class="card-title mb-3">Available Items</h5>
               <div class="input-group mb-3">
                 <span class="input-group-text">
                   <i class="bi bi-search"></i>
                 </span>
                 <input type="text" class="form-control" v-model="searchQuery" placeholder="Search items...">
               </div>
-              <ul class="nav nav-tabs" id="elementTabs" role="tablist">
-                <li class="nav-item" role="presentation" v-for="(category, index) in categories" :key="category.name">
-                  <button 
-                    class="nav-link" 
-                    :class="{ 'active': index === 0 }" 
-                    :id="`${category.name.toLowerCase()}-tab`" 
-                    data-bs-toggle="tab" 
-                    :data-bs-target="`#${category.name.toLowerCase()}`" 
-                    type="button" 
-                    role="tab" 
-                    :aria-controls="category.name.toLowerCase()" 
-                    :aria-selected="index === 0"
-                  >
-                    {{ category.name }}
-                  </button>
-                </li>
-              </ul>
-              <div class="tab-content mt-3" id="elementTabsContent">
-                <div 
-                  v-for="(category, index) in filteredCategories" 
-                  :key="category.name"
-                  class="tab-pane fade" 
-                  :class="{ 'show active': index === 0 }"
-                  :id="category.name.toLowerCase()" 
-                  role="tabpanel" 
-                  :aria-labelledby="`${category.name.toLowerCase()}-tab`"
-                >
-                  <div class="row g-2">
-                    <div v-for="item in category.items" :key="item.id" class="col-6">
-                      <div class="item-option p-2 border rounded text-center" @click="addItem(item)" :title="item.name">
-                        <img :src="item.image" :alt="item.name" class="img-fluid mb-2 rounded">
-                        <small class="d-block text-muted">{{ item.name }}</small>
-                      </div>
-                    </div>
+              <div v-if="loading" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+              <div v-else class="row g-2">
+                <div v-for="item in filteredItems" :key="item.id" class="col-6">
+                  <div class="item-option p-2 border rounded text-center" @click="addItem(item)" :title="item.name">
+                    <img :src="item.image" :alt="item.name" class="img-fluid mb-2 rounded">
+                    <small class="d-block text-muted">{{ item.name }}</small>
                   </div>
                 </div>
               </div>
@@ -120,7 +96,7 @@
                   :class="{ 'selected': selectedItemIndex === index }"
                   @mousedown.stop="selectItem(index, $event)"
                   @touchstart.stop="selectItem(index, $event)"
-                  class="bouquet-item"
+                  class="flower-item"
                 >
                   <img :src="item.image" :alt="item.name" draggable="false">
                   <div v-if="selectedItemIndex === index" class="item-controls">
@@ -149,37 +125,41 @@
             </div>
           </div>
 
-          <!-- Layer Panel -->
+          <!-- Canva-like Layer Panel -->
           <div class="card mt-3">
             <div class="card-body">
               <h5 class="card-title mb-3">Layers</h5>
               <div class="layer-list">
-                <div 
-                  v-for="(item, index) in items" 
-                  :key="item.id" 
-                  class="layer-item d-flex align-items-center mb-2 p-2 border rounded"
-                  draggable="true"
-                  @dragstart="startLayerDrag(index, $event)"
-                  @dragover.prevent
-                  @dragenter.prevent
-                  @drop="onLayerDrop(index, $event)"
+                <draggable 
+                  v-model="items" 
+                  item-key="id"
+                  handle=".layer-drag-handle"
+                  @end="onLayerReorder"
+                  class="list-group"
                 >
-                  <i class="bi bi-grip-vertical me-2 text-muted"></i>
-                  <img :src="item.image" :alt="item.name" class="layer-thumbnail me-2" width="30" height="30">
-                  <span class="flex-grow-1">{{ item.name }}</span>
-                  <button @click="toggleItemVisibility(index)" class="btn btn-sm btn-light me-1">
-                    <i :class="item.visible ? 'bi bi-eye' : 'bi bi-eye-slash'"></i>
-                  </button>
-                  <button @click="bringToFront(index)" class="btn btn-sm btn-light me-1" title="Bring to Front">
-                    <i class="bi bi-front"></i>
-                  </button>
-                  <button @click="sendToBack(index)" class="btn btn-sm btn-light me-1" title="Send to Back">
-                    <i class="bi bi-back"></i>
-                  </button>
-                  <button @click="removeItem(index)" class="btn btn-sm btn-danger">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
+                  <template #item="{ element, index }">
+                    <div 
+                      class="list-group-item layer-item d-flex align-items-center"
+                      :class="{ 'active': selectedItemIndex === index }"
+                      @click="selectItem(index)"
+                    >
+                      <i class="bi bi-grip-vertical me-2 layer-drag-handle" title="Drag to reorder"></i>
+                      <img :src="element.image" :alt="element.name" class="layer-thumbnail me-2" width="30" height="30">
+                      <span class="layer-name flex-grow-1">{{ element.name }}</span>
+                      <div class="layer-actions">
+                        <button @click.stop="toggleItemVisibility(index)" class="btn btn-sm btn-link p-0 me-2">
+                          <i :class="element.visible ? 'bi bi-eye' : 'bi bi-eye-slash'" :title="element.visible ? 'Hide' : 'Show'"></i>
+                        </button>
+                        <button @click.stop="removeItem(index)" class="btn btn-sm btn-link p-0 text-danger">
+                          <i class="bi bi-trash" title="Remove"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+                </draggable>
+              </div>
+              <div v-if="items.length === 0" class="text-center text-muted py-3">
+                No items added yet. Start by adding items from above.
               </div>
             </div>
           </div>
@@ -191,7 +171,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useFirestore } from 'vuefire'
+import { collection, onSnapshot } from 'firebase/firestore'
+import draggable from 'vuedraggable'
 
+const db = useFirestore()
+const availableItems = ref([])
+const loading = ref(true)
 const items = ref([])
 const selectedItemIndex = ref(-1)
 const isDragging = ref(false)
@@ -215,43 +201,35 @@ const canvasStyle = computed(() => ({
   height: canvasSize.value === 'small' ? '400px' : '600px',
 }))
 
-const categories = [
-  {
-    name: 'Flowers',
-    items: [
-      { id: 1, name: 'Rose', image: '/src/assets/images/flowers/rose.png' },
-      { id: 2, name: 'Tulip', image: '/src/assets/images/flowers/lily.png' },
-      { id: 3, name: 'Lily', image: '/flower-bouquet.jpg' },
-      { id: 4, name: 'Sunflower', image: '/flower-bouquet.jpg' },
-    ]
-  },
-  {
-    name: 'Greenery',
-    items: [
-      { id: 5, name: 'Fern', image: '/flower-bouquet.jpg' },
-      { id: 6, name: 'Eucalyptus', image: '/flower-bouquet.jpg' },
-      { id: 7, name: 'Baby\'s Breath', image: '/flower-bouquet.jpg' },
-    ]
-  },
-  {
-    name: 'Accessories',
-    items: [
-      { id: 8, name: 'Ribbon', image: '/src/assets/images/flowers/whiteribbon.png' },
-      { id: 9, name: 'Wrapper', image: '/src/assets/images/flowers/wrapper (1).png' },
-      { id: 10, name: 'Card', image: '/flower-bouquet.jpg' },
-    ]
-  }
-]
-
-const filteredCategories = computed(() => {
-  if (!searchQuery.value) return categories
-  return categories.map(category => ({
-    ...category,
-    items: category.items.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  })).filter(category => category.items.length > 0)
+const filteredItems = computed(() => {
+  if (!searchQuery.value) return availableItems.value
+  return availableItems.value.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
 })
+
+onMounted(() => {
+  const unsubscribeFlowers = onSnapshot(collection(db, 'flowerTypes'), (snapshot) => {
+    const flowers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'flower' }))
+    updateAvailableItems(flowers, 'flower')
+  })
+
+  const unsubscribeAttachments = onSnapshot(collection(db, 'attachments'), (snapshot) => {
+    const attachments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), type: 'attachment' }))
+    updateAvailableItems(attachments, 'attachment')
+  })
+
+  return () => {
+    unsubscribeFlowers()
+    unsubscribeAttachments()
+  }
+})
+
+const updateAvailableItems = (newItems, type) => {
+  availableItems.value = availableItems.value.filter(item => item.type !== type)
+  availableItems.value.push(...newItems)
+  loading.value = false
+}
 
 const addItem = (item) => {
   const newItem = {
@@ -271,7 +249,7 @@ const addItem = (item) => {
 
 const selectItem = (index, event) => {
   selectedItemIndex.value = index
-  if (index !== -1) {
+  if (event && index !== -1) {
     startDrag(event)
   }
 }
@@ -299,9 +277,8 @@ const onDrag = (event) => {
   const item = items.value[selectedItemIndex.value]
   const x = clientX - rect.left + offsetX.value
   const y = clientY - rect.top + offsetY.value
-
-  item.x = Math.max(0, Math.min(x, rect.width - item.width))
-  item.y = Math.max(0, Math.min(y, rect.height - item.height))
+  item.x = Math.max(0, Math.min(x, canvasArea.value.clientWidth - item.width))
+  item.y = Math.max(0, Math.min(y, canvasArea.value.clientHeight - item.height))
 }
 
 const stopDrag = () => {
@@ -315,37 +292,13 @@ const clearSelection = () => {
   selectedItemIndex.value = -1
 }
 
-const startResize = (event, index) => {
-  isResizing.value = true
-  selectedItemIndex.value = index
-  const clientX = event.clientX || (event.touches && event.touches[0].clientX)
-  const clientY = event.clientY || (event.touches && event.touches[0].clientY)
-  startX.value = clientX
-  startY.value = clientY
-}
-
-const onResize = (event) => {
-  if (!isResizing.value || selectedItemIndex.value === -1) return
-  const clientX = event.clientX || (event.touches && event.touches[0].clientX)
-  const clientY = event.clientY || (event.touches && event.touches[0].clientY)
-  if (clientX === undefined || clientY === undefined) return
-  const dx = clientX - startX.value
-  const dy = clientY - startY.value
-  const item = items.value[selectedItemIndex.value]
-  const aspectRatio = item.width / item.height
-  const newWidth = Math.max(20, item.width + dx)
-  const newHeight = newWidth / aspectRatio
-  item.width = newWidth
-  item.height = newHeight
-  item.scale = newWidth / 100
-  startX.value = clientX
-  startY.value = clientY
-}
-
-const stopResize = () => {
-  if (isResizing.value) {
-    isResizing.value = false
-    addToHistory()
+const getItemStyle = (item) => {
+  return {
+    transform: `translate(${item.x}px, ${item.y}px) rotate(${item.rotation}deg) scale(${item.flipped ? -item.scale : item.scale}, ${item.scale})`,
+    width: `${item.width}px`,
+    height: `${item.height}px`,
+    zIndex: items.value.indexOf(item),
+    display: item.visible ? 'block' : 'none'
   }
 }
 
@@ -359,110 +312,111 @@ const flipItem = (index) => {
   addToHistory()
 }
 
+const changeItemSize = (index, factor) => {
+  const item = items.value[index]
+  item.width *= factor
+  item.height *= factor
+  item.scale *= factor
+  addToHistory()
+}
+
 const removeItem = (index) => {
   items.value.splice(index, 1)
   selectedItemIndex.value = -1
   addToHistory()
 }
 
-const getItemStyle = (item) => {
-  const transform = [
-    `translate(${item.x}px, ${item.y}px)`,
-    `rotate(${item.rotation}deg)`,
-    `scale(${item.scale})`,
-    item.flipped ? 'scaleX(-1)' : ''
-  ].filter(Boolean).join(' ')
-
-  return {
-    width: `${item.width}px`,
-    height: `${item.height}px`,
-    transform,
-    position: 'absolute',
-    cursor: 'move',
-    transformOrigin: 'center center',
-    display: item.visible ? 'block' : 'none',
-  }
+const startResize = (event, index) => {
+  event.stopPropagation()
+  isResizing.value = true
+  selectedItemIndex.value = index
+  const rect = canvasArea.value.getBoundingClientRect()
+  const clientX = event.clientX || (event.touches && event.touches[0].clientX)
+  const clientY = event.clientY || (event.touches && event.touches[0].clientY)
+  startX.value = clientX - rect.left
+  startY.value = clientY - rect.top
 }
 
-const changeItemSize = (index, factor) => {
-  const item = items.value[index]
-  const canvasWidth = canvasArea.value.clientWidth
-  const canvasHeight = canvasArea.value.clientHeight
+const onResize = (event) => {
+  if (!isResizing.value || selectedItemIndex.value === -1) return
+  const rect = canvasArea.value.getBoundingClientRect()
+  const clientX = event.clientX || (event.touches && event.touches[0].clientX)
+  const clientY = event.clientY || (event.touches && event.touches[0].clientY)
+  const deltaX = (clientX - rect.left) - startX.value
+  const deltaY = (clientY - rect.top) - startY.value
+  const item = items.value[selectedItemIndex.value]
+  const aspectRatio = item.width / item.height
+  const newWidth = Math.max(20, item.width + deltaX)
+  const newHeight = newWidth / aspectRatio
+  item.width = newWidth
+  item.height = newHeight
+  item.scale = newWidth / 100
+  startX.value = clientX - rect.left
+  startY.value = clientY - rect.top
+}
 
-  // Store original center position
-  const originalCenterX = item.x + (item.width / 2)
-  const originalCenterY = item.y + (item.height / 2)
-
-  // Calculate new dimensions while maintaining aspect ratio
-  const newWidth = Math.min(Math.max(20, item.width * factor), canvasWidth)
-  const aspectRatio = item.height / item.width
-  const newHeight = newWidth * aspectRatio
-
-  // Don't proceed if new size would exceed canvas bounds
-  if (newHeight > canvasHeight) return
-
-  // Update size
-  const widthDiff = newWidth - item.width
-  const heightDiff = newHeight - item.height
-
-  // Calculate new position to maintain center point
-  const newX = originalCenterX - (newWidth / 2)
-  const newY = originalCenterY - (newHeight / 2)
-
-  // Apply changes only if the new position would be within canvas bounds
-  if (newX >= 0 && newX + newWidth <= canvasWidth && 
-      newY >= 0 && newY + newHeight <= canvasHeight) {
-    item.width = newWidth
-    item.height = newHeight
-    item.x = newX
-    item.y = newY
-    item.scale = newWidth / 100 // Update scale based on new width
+const stopResize = () => {
+  if (isResizing.value) {
+    isResizing.value = false
     addToHistory()
   }
 }
 
 const addToHistory = () => {
-  history.value = history.value.slice(0, historyIndex.value + 1)
+  historyIndex.value++
+  history.value = history.value.slice(0, historyIndex.value)
   history.value.push(JSON.parse(JSON.stringify(items.value)))
-  historyIndex.value = history.value.length - 1
-  saveToLocalStorage()
 }
 
 const undo = () => {
-  if (canUndo.value) {
+  if (historyIndex.value > 0) {
     historyIndex.value--
     items.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]))
-    saveToLocalStorage()
   }
 }
 
 const redo = () => {
-  if (canRedo.value) {
+  if (historyIndex.value < history.value.length - 1) {
     historyIndex.value++
     items.value = JSON.parse(JSON.stringify(history.value[historyIndex.value]))
-    saveToLocalStorage()
   }
 }
 
 const canUndo = computed(() => historyIndex.value > 0)
 const canRedo = computed(() => historyIndex.value < history.value.length - 1)
 
-const updateCanvasColor = () => {
-  addToHistory()
-}
+const exportImage = () => {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  canvas.width = canvasArea.value.clientWidth
+  canvas.height = canvasArea.value.clientHeight
 
-const updateCanvasSize = () => {
-  const oldWidth = canvasArea.value.clientWidth
-  const oldHeight = canvasArea.value.clientHeight
-  const newWidth = canvasSize.value === 'small' ? 600 : 900
-  const newHeight = canvasSize.value === 'small' ? 400 : 600
+  // Draw background
+  ctx.fillStyle = canvasBackgroundColor.value
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+  // Draw items
   items.value.forEach(item => {
-    item.x = (item.x / oldWidth) * newWidth
-    item.y = (item.y / oldHeight) * newHeight
+    if (!item.visible) return
+    const img = new Image()
+    img.src = item.image
+    img.onload = () => {
+      ctx.save()
+      ctx.translate(item.x + item.width / 2, item.y + item.height / 2)
+      ctx.rotate(item.rotation * Math.PI / 180)
+      ctx.scale(item.flipped ? -item.scale : item.scale, item.scale)
+      ctx.drawImage(img, -item.width / 2, -item.height / 2, item.width, item.height)
+      ctx.restore()
+    }
   })
 
-  addToHistory()
+  // Download image
+  setTimeout(() => {
+    const link = document.createElement('a')
+    link.download = 'flower_arrangement.png'
+    link.href = canvas.toDataURL()
+    link.click()
+  }, 500) // Wait for images to load
 }
 
 const toggleItemVisibility = (index) => {
@@ -470,190 +424,85 @@ const toggleItemVisibility = (index) => {
   addToHistory()
 }
 
-const exportImage = async () => {
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  canvas.width = canvasArea.value.clientWidth
-  canvas.height = canvasArea.value.clientHeight
-
-  ctx.fillStyle = canvasBackgroundColor.value
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-  for (const item of items.value) {
-    if (!item.visible) continue
-    const img = new Image()
-    img.src = item.image
-    await new Promise(resolve => {
-      img.onload = () => {
-        ctx.save()
-        ctx.translate(item.x + item.width / 2, item.y + item.height / 2)
-        ctx.rotate((item.rotation * Math.PI) / 180)
-        ctx.scale(item.flipped ? -1 : 1, 1)
-        ctx.drawImage(img, -item.width / 2, -item.height / 2, item.width, item.height)
-        ctx.restore()
-        resolve()
-      }
-    })
-  }
-
-  const link = document.createElement('a')
-  link.download = 'bouquet-customizer-export.png'
-  link.href = canvas.toDataURL()
-  link.click()
-}
-
-const startLayerDrag = (index, event) => {
-  event.dataTransfer.setData('text/plain', index)
-}
-
-const onLayerDrop = (targetIndex, event) => {
-  const sourceIndex = parseInt(event.dataTransfer.getData('text/plain'))
-  if (sourceIndex !== targetIndex) {
-    const [movedItem] = items.value.splice(sourceIndex, 1)
-    items.value.splice(targetIndex, 0, movedItem)
-    addToHistory()
-  }
-}
-
-const saveToLocalStorage = () => {
-  localStorage.setItem('bouquetCustomizerState', JSON.stringify({
-    items: items.value,
-    canvasBackgroundColor: canvasBackgroundColor.value,
-    showGrid: showGrid.value,
-    canvasSize: canvasSize.value
-  }))
-}
-
-const loadFromLocalStorage = () => {
-  const savedState = localStorage.getItem('bouquetCustomizerState')
-  if (savedState) {
-    const parsedState = JSON.parse(savedState)
-    items.value = parsedState.items
-    canvasBackgroundColor.value = parsedState.canvasBackgroundColor
-    showGrid.value = parsedState.showGrid
-    canvasSize.value = parsedState.canvasSize
-    history.value = [items.value]
-    historyIndex.value = 0
-  }
-}
-
-const bringToFront = (index) => {
-  const item = items.value.splice(index, 1)[0]
-  items.value.push(item)
+const onLayerReorder = () => {
   addToHistory()
 }
 
-const sendToBack = (index) => {
-  const item = items.value.splice(index, 1)[0]
-  items.value.unshift(item)
+const updateCanvasColor = () => {
+  addToHistory()
+}
+
+const updateCanvasSize = () => {
   addToHistory()
 }
 
 const handleKeydown = (event) => {
-  if (selectedItemIndex.value === -1) return
-
-  switch (event.key) {
-    case 'ArrowUp':
-      items.value[selectedItemIndex.value].y -= 1
-      break
-    case 'ArrowDown':
-      items.value[selectedItemIndex.value].y += 1
-      break
-    case 'ArrowLeft':
-      items.value[selectedItemIndex.value].x -= 1
-      break
-    case 'ArrowRight':
-      items.value[selectedItemIndex.value].x += 1
-      break
-    case '+':
-      changeItemSize(selectedItemIndex.value, 1.1)
-      break
-    case '-':
-      changeItemSize(selectedItemIndex.value, 0.9)
-      break
-    case 'r':
-      rotateItem(selectedItemIndex.value, 45)
-      break
-    case 'f':
-      flipItem(selectedItemIndex.value)
-      break
-    case 'Delete':
-      removeItem(selectedItemIndex.value)
-      break
+  if (event.key === 'Delete' && selectedItemIndex.value !== -1) {
+    removeItem(selectedItemIndex.value)
   }
-
-  addToHistory()
 }
 
 onMounted(() => {
-  loadFromLocalStorage()
-  document.addEventListener('mousemove', onDrag)
-  document.addEventListener('touchmove', onDrag)
-  document.addEventListener('mouseup', stopDrag)
-  document.addEventListener('touchend', stopDrag)
-  document.addEventListener('mousemove', onResize)
-  document.addEventListener('touchmove', onResize)
-  document.addEventListener('mouseup', stopResize)
-  document.addEventListener('touchend', stopResize)
+  window.addEventListener('mousemove', onDrag)
+  window.addEventListener('mouseup', stopDrag)
+  window.addEventListener('mousemove', onResize)
+  window.addEventListener('mouseup', stopResize)
+  window.addEventListener('touchmove', onDrag)
+  window.addEventListener('touchend', stopDrag)
+  window.addEventListener('touchmove', onResize)
+  window.addEventListener('touchend', stopResize)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('mousemove', onDrag)
-  document.removeEventListener('touchmove', onDrag)
-  document.removeEventListener('mouseup', stopDrag)
-  document.removeEventListener('touchend', stopDrag)
-  document.removeEventListener('mousemove', onResize)
-  document.removeEventListener('touchmove', onResize)
-  document.removeEventListener('mouseup', stopResize)
-  document.removeEventListener('touchend', stopResize)
+  window.removeEventListener('mousemove', onDrag)
+  window.removeEventListener('mouseup', stopDrag)
+  window.removeEventListener('mousemove', onResize)
+  window.removeEventListener('mouseup', stopResize)
+  window.removeEventListener('touchmove', onDrag)
+  window.removeEventListener('touchend', stopDrag)
+  window.removeEventListener('touchmove', onResize)
+  window.removeEventListener('touchend', stopResize)
 })
 
-watch([items, canvasBackgroundColor, showGrid, canvasSize], () => {
-  saveToLocalStorage()
-}, { deep: true })
+watch(items, () => {
+  selectedItemIndex.value = -1
+})
 </script>
 
 <style scoped>
-.canvas-area {
-  border: 2px solid #007bff;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 123, 255, 0.2);
-  transition: all 0.3s ease;
+.user-customize {
+  min-height: 100vh;
 }
 
-.canvas-area.show-grid {
-  background-image: 
-    linear-gradient(to right, rgba(0, 123, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 123, 255, 0.1) 1px, transparent 1px);
+.canvas-container {
+  overflow: hidden;
+}
+
+.canvas-area {
+  position: relative;
+  margin: 0 auto;
+}
+
+.show-grid {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-.bouquet-item {
+.flower-item {
   position: absolute;
   cursor: move;
   user-select: none;
-  transform-origin: center center !important;
-  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
 }
 
-.bouquet-item img {
+.flower-item img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  pointer-events: none;
-  transition: filter 0.3s ease;
 }
 
-.bouquet-item.selected {
+.flower-item.selected {
   outline: 2px solid #007bff;
-  z-index: 10;
-  box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
-}
-
-.bouquet-item.selected img {
-  filter: drop-shadow(0 0 5px rgba(0, 123, 255, 0.5));
 }
 
 .item-controls {
@@ -661,20 +510,19 @@ watch([items, canvasBackgroundColor, showGrid, canvasSize], () => {
   top: -40px;
   left: 50%;
   transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 5px;
+  padding: 5px;
   display: flex;
   gap: 5px;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 5px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .resize-handle {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 10px;
-  height: 10px;
+  bottom: -10px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
   background-color: #007bff;
   border-radius: 50%;
   cursor: se-resize;
@@ -682,34 +530,64 @@ watch([items, canvasBackgroundColor, showGrid, canvasSize], () => {
 
 .item-option {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
 }
 
 .item-option:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.canvas-item-move {
-  transition: all 0.3s ease;
+.layer-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.layer-item {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.layer-item:hover {
+  background-color: #f8f9fa;
+}
+
+.layer-item.active {
+  background-color: #e9ecef;
+}
+
+.layer-drag-handle {
+  cursor: move;
+}
+
+.layer-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.layer-thumbnail {
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.layer-actions {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.layer-item:hover .layer-actions {
+  opacity: 1;
 }
 
 .canvas-item-enter-active,
 .canvas-item-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.5s ease;
 }
 
 .canvas-item-enter-from,
 .canvas-item-leave-to {
   opacity: 0;
   transform: scale(0.5);
-}
-
-.layer-item {
-  cursor: move;
-}
-
-.layer-thumbnail {
-  object-fit: cover;
 }
 </style>

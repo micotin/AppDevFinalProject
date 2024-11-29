@@ -1,28 +1,28 @@
 <template>
   <div class="admin-gallery">
-    <h2 class="mb-4 text-center">Gallery Management</h2>
+    <h2 class="mb-4 text-white">Gallery Management</h2>
 
     <div class="row mb-4 justify-content-center">
       <div class="col-md-6">
         <form @submit.prevent="addArrangement" class="card shadow-sm">
           <div class="card-body">
-            <h5 class="card-title mb-3 text-center">Add New Arrangement</h5>
+            <h5 class="card-title mb-3 text-center text-white">Add New Arrangement</h5>
             <div class="mb-3">
-              <label for="name" class="form-label">Name</label>
+              <label for="name" class="form-label text-white">Name</label>
               <input v-model="newArrangement.name" type="text" class="form-control" id="name" required aria-label="Arrangement Name">
             </div>
             <div class="mb-3">
-              <label for="description" class="form-label">Description</label>
+              <label for="description" class="form-label text-white">Description</label>
               <textarea v-model="newArrangement.description" class="form-control" id="description" rows="3" required aria-label="Arrangement Description"></textarea>
             </div>
             <div class="mb-3">
-              <label for="occasion" class="form-label">Occasion</label>
-              <button type="button" class="btn btn-outline-secondary w-100" @click="openOccasionModal">
+              <label for="occasion" class="form-label text-white">Occasion</label>
+              <button type="button" class="btn btn-outline-light w-100" @click="openOccasionModal">
                 {{ newArrangement.occasion || 'Select an occasion' }}
               </button>
             </div>
             <div class="mb-3">
-              <label for="image" class="form-label">Image</label>
+              <label for="image" class="form-label text-white">Image</label>
               <input @change="handleImageUpload" type="file" class="form-control" id="image" accept="image/*" required aria-label="Upload Image">
             </div>
             <button type="submit" class="btn btn-primary w-100" :disabled="loading">
@@ -34,18 +34,18 @@
       </div>
     </div>
 
-    <div class="row">
-      <div v-for="arrangement in arrangements" :key="arrangement.id" class="col-md-4 col-sm-6 mb-4">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <div v-for="arrangement in arrangements" :key="arrangement.id" class="col">
         <div class="card h-100 shadow-sm arrangement-card">
           <img :src="arrangement.imageUrl" class="card-img-top" :alt="arrangement.name">
           <div class="card-body">
-            <h5 class="card-title">{{ arrangement.name }}</h5>
-            <p class="card-text">{{ arrangement.description }}</p>
+            <h5 class="card-title text-white">{{ arrangement.name }}</h5>
+            <p class="card-text text-white-50">{{ arrangement.description }}</p>
             <p class="card-text"><small class="text-muted">Occasion: {{ arrangement.occasion }}</small></p>
             <p class="card-text"><small class="text-muted">Created by: {{ arrangement.createdBy }}</small></p>
           </div>
           <div class="card-footer bg-transparent d-flex justify-content-between">
-            <button @click="editArrangement(arrangement)" class="btn btn-sm btn-outline-primary">Edit</button>
+            <button @click="editArrangement(arrangement)" class="btn btn-sm btn-outline-light">Edit</button>
             <button @click="deleteArrangement(arrangement.id)" class="btn btn-sm btn-outline-danger">Delete</button>
           </div>
         </div>
@@ -57,27 +57,27 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="editArrangementModalLabel">Edit Arrangement</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title text-white" id="editArrangementModalLabel">Edit Arrangement</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="updateArrangement">
               <div class="mb-3">
-                <label for="editName" class="form-label">Name</label>
+                <label for="editName" class="form-label text-white">Name</label>
                 <input v-model="editingArrangement.name" type="text" class="form-control" id="editName" required>
               </div>
               <div class="mb-3">
-                <label for="editDescription" class="form-label">Description</label>
+                <label for="editDescription" class="form-label text-white">Description</label>
                 <textarea v-model="editingArrangement.description" class="form-control" id="editDescription" rows="3" required></textarea>
               </div>
               <div class="mb-3">
-                <label for="editOccasion" class="form-label">Occasion</label>
-                <button type="button" class="btn btn-outline-secondary w-100" @click="openOccasionModal('edit')">
+                <label for="editOccasion" class="form-label text-white">Occasion</label>
+                <button type="button" class="btn btn-outline-light w-100" @click="openOccasionModal('edit')">
                   {{ editingArrangement.occasion || 'Select an occasion' }}
                 </button>
               </div>
               <div class="mb-3">
-                <label for="editImage" class="form-label">New Image (optional)</label>
+                <label for="editImage" class="form-label text-white">New Image (optional)</label>
                 <input @change="handleEditImageUpload" type="file" class="form-control" id="editImage" accept="image/*">
               </div>
               <button type="submit" class="btn btn-primary w-100">
@@ -95,15 +95,15 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="occasionModalLabel">Select an Occasion</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title text-white" id="occasionModalLabel">Select an Occasion</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="row row-cols-3 row-cols-md-4 row-cols-lg-5 g-3">
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
               <div v-for="occasion in occasions" :key="occasion" class="col">
                 <button 
                   @click="selectOccasion(occasion)" 
-                  class="btn btn-outline-primary w-100"
+                  class="btn btn-outline-light w-100"
                   :class="{ 'active': isOccasionSelected(occasion) }"
                 >
                   {{ occasion }}
@@ -255,7 +255,7 @@ export default {
     };
 
     onMounted(async () => {
-      fetchArrangements();
+      await fetchArrangements();
       editModal = new Modal(document.getElementById('editArrangementModal'));
       occasionModal = new Modal(document.getElementById('occasionModal'));
     });
@@ -282,26 +282,85 @@ export default {
 
 <style scoped>
 .admin-gallery {
-  padding: 1rem;
+  font-family: 'Poppins', sans-serif;
+  color: #ffffff;
 }
 
 .card {
-  transition: box-shadow 0.3s ease-in-out;
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
+
 .card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-.spinner-border {
-  vertical-align: text-bottom;
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
 }
 
-.modal-body .btn-outline-primary {
-  margin-bottom: 0.5rem;
+.btn-primary {
+  background: linear-gradient(135deg, #e5484d 0%, #a12c82 100%);
+  border: none;
 }
 
-.modal-body .btn-outline-primary.active {
-  background-color: #0d6efd;
-  color: white;
+.btn-primary:hover, .btn-primary:focus {
+  background: linear-gradient(135deg, #f05a5f 0%, #b13d93 100%);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.form-control, .form-select {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.form-control:focus, .form-select:focus {
+  background: rgba(40, 40, 55, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.modal-content {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-muted {
+  color: #b4b4bb !important;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 </style>

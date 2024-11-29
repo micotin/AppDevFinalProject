@@ -1,112 +1,136 @@
 <template>
-  <div class="admin-panel-wrapper d-flex">
-    <!-- Sidebar -->
-    <nav id="sidebar" class="sidebar shadow-lg">
-      <div class="sidebar-sticky">
-        <div class="sidebar-header p-3">
-          <div class="logo-placeholder mb-3">
-            <i class="bi bi-flower3 fs-1 text-white"></i>
+  <div class="admin-panel-wrapper">
+    <div class="admin-panel-content">
+      <!-- Sidebar -->
+      <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo-container">
+            <i class="bi bi-flower3"></i>
           </div>
-          <h5 class="text-center text-white mb-0">Sam1 Flower Shop</h5>
+          <h1 class="shop-name">Sam1 Flower Shop</h1>
         </div>
-        <ul class="nav flex-column">
-          <li class="nav-item" v-for="item in navItems" :key="item.path">
-            <router-link class="nav-link" :to="item.path" active-class="active">
-              <i :class="item.icon + ' me-2'"></i> {{ item.name }}
+        
+        <ul class="nav-menu">
+          <li v-for="item in navItems" :key="item.path" class="nav-item">
+            <router-link :to="item.path" class="nav-link" :class="{ active: $route.path === item.path }">
+              <i :class="item.icon"></i>
+              <span>{{ item.name }}</span>
             </router-link>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="toggleContactUs" :class="{ active: showContactUs }">
-              <i class="bi bi-envelope me-2"></i> Inquiries
+            <a href="#" @click.prevent="toggleContactUs" class="nav-link" :class="{ active: showContactUs }">
+              <i class="bi bi-envelope"></i>
+              <span>Inquiries</span>
             </a>
           </li>
+          <li class="nav-item">
+            <router-link to="/admin/customize-attachment" class="nav-link">
+              <i class="bi bi-paperclip"></i>
+              <span>Customize Attachment</span>
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/admin/reviews" class="nav-link">
+              <i class="bi bi-star"></i>
+              <span>Reviews</span>
+            </router-link>
+          </li>
         </ul>
-      </div>
-    </nav>
+      </nav>
 
-    <!-- Main content -->
-    <main class="main-content shadow-lg">
-      <header class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <div>
-          <h1 class="h2">Sam1's Admin Panel</h1>
-          <p class="text-muted">{{ formattedDateTime }}</p>
-        </div>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <div class="d-flex align-items-center gap-2">
-            <button @click="openAdminModal" class="btn btn-sm btn-outline-secondary me-2">
-              <i class="bi bi-person-circle me-1"></i> Profile
+      <!-- Main Content -->
+      <main class="main-content">
+        <header class="main-header">
+          <div class="header-content">
+            <h1>Sam1's Admin Panel</h1>
+            <p class="timestamp">{{ formattedDateTime }}</p>
+          </div>
+          <div class="header-actions">
+            <button @click="openAdminModal" class="btn btn-profile">
+              <i class="bi bi-person-circle"></i>
+              Profile
             </button>
-            <button @click="logout" type="button" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-box-arrow-right me-1"></i> Logout
+            <button @click="logout" class="btn btn-logout">
+              <i class="bi bi-box-arrow-right"></i>
+              Logout
             </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <!-- Dynamic Content based on Route -->
-      <router-view v-if="!showContactUs"></router-view>
-
-      <!-- Admin Contact Us Management -->
-      <div v-if="showContactUs" class="admin-contact-us">
-        <h1 class="mb-4">Inquiry Management</h1>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="card">
-              <div class="card-body">
-                <h5 class="card-title mb-4">Inquiries</h5>
-                <div class="mb-3">
-                  <div class="btn-group" role="group" aria-label="Filter inquiries">
-                    <button 
-                      v-for="status in ['all', 'new', 'in-progress', 'resolved']" 
-                      :key="status"
-                      @click="filterStatus = status"
-                      class="btn"
-                      :class="filterStatus === status ? 'btn-primary' : 'btn-outline-primary'"
-                    >
-                      {{ status.charAt(0).toUpperCase() + status.slice(1) }}
-                    </button>
-                  </div>
-                </div>
-                <div class="table-responsive">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Type</th>
-                        <th>Message</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="inquiry in filteredInquiries" :key="inquiry.id">
-                        <td>{{ formatDate(inquiry.createdAt) }}</td>
-                        <td>{{ inquiry.name }}</td>
-                        <td>{{ inquiry.email }}</td>
-                        <td>{{ inquiry.inquiryType }}</td>
-                        <td>{{ truncateMessage(inquiry.message) }}</td>
-                        <td>
-                          <span :class="getStatusBadgeClass(inquiry.status)">
-                            {{ inquiry.status }}
-                          </span>
-                        </td>
-                        <td>
-                          <button class="btn btn-sm btn-primary me-2" @click="viewInquiry(inquiry)">View</button>
-                          <button class="btn btn-sm btn-success" @click="updateStatus(inquiry)">Update Status</button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+        <div class="content-wrapper">
+          <Suspense>
+            <template #default>
+              <router-view v-if="!showContactUs"></router-view>
+            </template>
+            <template #fallback>
+              <div class="loading-indicator">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
                 </div>
               </div>
+            </template>
+          </Suspense>
+          
+          <div v-if="showContactUs" class="admin-contact-us">
+            <h2 class="mb-4">Inquiry Management</h2>
+            <div class="filter-buttons mb-4">
+              <button 
+                v-for="status in ['all', 'new', 'in-progress', 'resolved']" 
+                :key="status"
+                @click="filterStatus = status"
+                :class="['btn', filterStatus === status ? 'btn-primary' : 'btn-outline-primary']"
+              >
+                {{ status.charAt(0).toUpperCase() + status.slice(1) }}
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-if="isLoading">
+                    <tr v-for="i in 5" :key="i">
+                      <td v-for="j in 7" :key="j">
+                        <div class="skeleton-loader"></div>
+                      </td>
+                    </tr>
+                  </template>
+                  <template v-else>
+                    <tr v-for="inquiry in filteredInquiries" :key="inquiry.id">
+                      <td>{{ formatDate(inquiry.createdAt) }}</td>
+                      <td>{{ inquiry.name }}</td>
+                      <td>{{ inquiry.email }}</td>
+                      <td>{{ inquiry.inquiryType }}</td>
+                      <td>{{ truncateMessage(inquiry.message) }}</td>
+                      <td>
+                        <span :class="['badge', getStatusBadgeClass(inquiry.status)]">
+                          {{ inquiry.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="btn btn-sm btn-info me-2" @click="viewInquiry(inquiry)">View</button>
+                        <button class="btn btn-sm btn-primary" @click="updateStatus(inquiry)">Update Status</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
 
+    <!-- Modals -->
     <!-- Admin Details Modal -->
     <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -184,14 +208,31 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAuth, signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc, serverTimestamp, collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { Modal } from 'bootstrap';
+import debounce from 'lodash/debounce';
+
+// Lazy load route components
+const Dashboard = defineAsyncComponent(() => import('./AdminDashboard.vue'));
+const Products = defineAsyncComponent(() => import('./AdminProducts.vue'));
+const Gallery = defineAsyncComponent(() => import('./AdminGallery.vue'));
+const Users = defineAsyncComponent(() => import('./AdminUsers.vue'));
+const Orders = defineAsyncComponent(() => import('./AdminOrders.vue'));
+const History = defineAsyncComponent(() => import('./AdminHistory.vue'));
 
 export default {
   name: 'AdminPanel',
+  components: {
+    Dashboard,
+    Products,
+    Gallery,
+    Users,
+    Orders,
+    History,
+  },
   setup() {
     const router = useRouter();
     const auth = getAuth();
@@ -211,6 +252,7 @@ export default {
     const newStatus = ref('');
     const filterStatus = ref('all');
     const showContactUs = ref(false);
+    const isLoading = ref(false);
 
     const navItems = [
       { name: 'Overview', path: '/admin/dashboard', icon: 'bi bi-speedometer2' },
@@ -218,7 +260,6 @@ export default {
       { name: 'Showcase', path: '/admin/gallery', icon: 'bi bi-images' },
       { name: 'Customer Base', path: '/admin/users', icon: 'bi bi-people' },
       { name: 'Transactions', path: '/admin/orders', icon: 'bi bi-cart3' },
-      { name: 'Analytics', path: '/admin/reports', icon: 'bi bi-bar-chart' },
       { name: 'Activity Log', path: '/admin/history', icon: 'bi bi-clock-history' },
     ];
 
@@ -237,9 +278,9 @@ export default {
       return inquiries.value.filter(inquiry => inquiry.status === filterStatus.value);
     });
 
-    const updateDateTime = () => {
+    const updateDateTime = debounce(() => {
       currentDateTime.value = new Date();
-    };
+    }, 1000);
 
     const fetchAdminDetails = async () => {
       const user = auth.currentUser;
@@ -292,9 +333,16 @@ export default {
 
     // Contact Us Management Methods
     const fetchInquiries = async () => {
-      const q = query(collection(db, 'inquiries'), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      inquiries.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      isLoading.value = true;
+      try {
+        const q = query(collection(db, 'inquiries'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        inquiries.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (error) {
+        console.error('Error fetching inquiries:', error);
+      } finally {
+        isLoading.value = false;
+      }
     };
 
     const formatDate = (timestamp) => {
@@ -312,7 +360,7 @@ export default {
         'in-progress': 'bg-warning',
         resolved: 'bg-success'
       };
-      return `badge ${classes[status] || 'bg-secondary'}`;
+      return classes[status] || 'bg-secondary';
     };
 
     const viewInquiry = (inquiry) => {
@@ -368,6 +416,7 @@ export default {
       filterStatus,
       filteredInquiries,
       showContactUs,
+      isLoading,
       formatDate,
       truncateMessage,
       getStatusBadgeClass,
@@ -384,114 +433,259 @@ export default {
 <style scoped>
 .admin-panel-wrapper {
   min-height: 100vh;
-  background-color: white;
-  padding: 20px;
-  overflow: hidden;
+  background: linear-gradient(135deg, #2d1b69 0%, #a12c82 100%);
+  padding: 1rem;
+}
+
+.admin-panel-content {
+  display: flex;
+  gap: 1rem;
+  height: calc(100vh - 2rem);
 }
 
 .sidebar {
-  position: fixed;
-  top: 20px;
-  bottom: 20px;
-  left: 20px;
-  z-index: 100;
   width: 280px;
-  background: linear-gradient(135deg, #5e548e, #231942);
-  overflow-y: auto;
-  transition: all 0.3s;
-  border-radius: 15px;
+  background: rgba(28, 28, 45, 0.95);
+  border-radius: 1rem;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
-.logo-placeholder {
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-container {
   width: 80px;
   height: 80px;
-  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 auto 1rem;
+  background: rgba(40, 40, 55, 0.95);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
 }
 
-.sidebar .nav-link {
-  color: rgba(255, 255, 255, 0.8);
+.logo-container i {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.shop-name {
+  color: white;
+  font-size: 1.25rem;
   font-weight: 500;
-  padding: 0.75rem 1rem;
-  border-radius: 0.25rem;
-  margin-bottom: 0.5rem;
-  transition: all 0.3s;
+  margin: 0;
 }
 
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.1);
+.nav-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-item {
+  margin-bottom: 0.25rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.nav-link i {
+  font-size: 1.25rem;
+  margin-right: 1rem;
+  width: 1.5rem;
+}
+
+.nav-link span {
+  font-size: 0.95rem;
+}
+
+.nav-link:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .main-content {
-  flex-grow: 1;
-  margin-left: 300px;
-  min-height: calc(100vh - 40px);
-  background-color: #e1ddf7;
-  border-radius: 15px;
+  flex: 1;
+  background: rgba(28, 28, 45, 0.8);
+  border-radius: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content h1 {
+  color: white;
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.timestamp {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-profile {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-profile:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-logout {
+  background: rgba(220, 38, 38, 0.1);
+  color: rgb(248, 113, 113);
+}
+
+.btn-logout:hover {
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.content-wrapper {
+  flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 1.5rem;
+}
+
+.admin-contact-us {
+  color: white;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.table {
+  color: white;
+}
+
+.table th {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.table td {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.modal-content {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.form-control, .form-select {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.form-control:focus, .form-select:focus {
+  background: rgba(40, 40, 55, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.skeleton-loader {
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 991.98px) {
   .admin-panel-wrapper {
-    padding: 10px;
+    padding: 0.5rem;
+  }
+
+  .admin-panel-content {
+    flex-direction: column;
+    height: auto;
   }
 
   .sidebar {
     width: 100%;
-    height: auto;
-    position: relative;
-    top: 0;
-    left: 0;
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
   }
-  
-  .main-content {
-    margin-left: 0;
-    min-height: calc(100vh - 20px);
+
+  .main-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
-}
 
-/* Custom scrollbar for webkit browsers */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.admin-contact-us {
-  font-family: 'Poppins', sans-serif;
-}
-
-.btn-primary {
-  background-color: #6a3093;
-  border-color: #6a3093;
-}
-
-.btn-primary:hover, .btn-primary:focus {
-  background-color: #a044ff;
-  border-color: #a044ff;
-}
-
-.text-primary {
-  color: #6a3093 !important;
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

@@ -23,6 +23,34 @@
       </div>
     </section>
 
+    <!-- Featured Review Section -->
+    <section class="featured-review py-5 bg-light" v-if="featuredReview">
+      <div class="container">
+        <h2 class="text-center mb-5">What Our Customers Say</h2>
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body text-center">
+                <div class="mb-4">
+                  <span class="badge bg-primary text-white px-3 py-2 rounded-pill">
+                    {{ getCategoryLabel(featuredReview.category) }}
+                  </span>
+                </div>
+                <p class="lead mb-4">"{{ featuredReview.reviewText }}"</p>
+                <div class="mb-3">
+                  <i v-for="star in 5" :key="star" 
+                     :class="['bi', star <= featuredReview.rating ? 'bi-star-fill' : 'bi-star', 'text-warning']">
+                  </i>
+                </div>
+                <p class="mb-0"><strong>{{ featuredReview.firstName }} {{ featuredReview.lastName }}</strong></p>
+                <small class="text-muted">{{ formatDate(featuredReview.createdAt) }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Why Choose Us Section -->
     <section class="why-choose-us py-5">
       <div class="container">
@@ -107,41 +135,42 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue';
 import { gsap } from 'gsap';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
 export default {
   name: 'LandingPage',
-  data() {
-    return {
-      email: '',
-      reasons: [
-        {
-          icon: 'fa-flower',
-          color: '#e74c3c',
-          title: "Fresh Flowers Daily",
-          description: "We source our flowers directly from local growers to ensure the freshest blooms."
-        },
-        {
-          icon: 'fa-truck',
-          color: '#3498db',
-          title: "Fast & Free Delivery",
-          description: "Enjoy free same-day delivery on all orders placed before 2 PM."
-        },
-        {
-          icon: 'fa-heart',
-          color: '#2ecc71',
-          title: "100% Satisfaction Guarantee",
-          description: "Not happy? We'll make it right or refund your purchase, no questions asked."
-        }
-      ]
-    }
-  },
-  methods: {
-    beforeEnter(el) {
+  setup() {
+    const email = ref('');
+    const featuredReview = ref(null);
+    const reasons = [
+      {
+        icon: 'fa-flower',
+        color: '#e74c3c',
+        title: "Fresh Flowers Daily",
+        description: "We source our flowers directly from local growers to ensure the freshest blooms."
+      },
+      {
+        icon: 'fa-truck',
+        color: '#3498db',
+        title: "Fast & Free Delivery",
+        description: "Enjoy free same-day delivery on all orders placed before 2 PM."
+      },
+      {
+        icon: 'fa-heart',
+        color: '#2ecc71',
+        title: "100% Satisfaction Guarantee",
+        description: "Not happy? We'll make it right or refund your purchase, no questions asked."
+      }
+    ];
+
+    const beforeEnter = (el) => {
       el.style.opacity = 0;
       el.style.transform = 'translateY(50px)';
-    },
-    enter(el, done) {
+    };
+
+    const enter = (el, done) => {
       gsap.to(el, {
         opacity: 1,
         y: 0,
@@ -149,12 +178,65 @@ export default {
         onComplete: done,
         delay: el.dataset.index * 0.2
       });
-    },
-    subscribeNewsletter() {
+    };
+
+    const subscribeNewsletter = () => {
       // Here you would typically send the email to your backend
-      alert(`Thank you for subscribing with: ${this.email}`);
-      this.email = '';
-    }
+      alert(`Thank you for subscribing with: ${email.value}`);
+      email.value = '';
+    };
+
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const getCategoryLabel = (category) => {
+      const labels = {
+        'product': 'Product Review',
+        'service': 'Service Review',
+        'delivery': 'Delivery Review',
+        'overall': 'Overall Experience'
+      };
+      return labels[category] || 'Review';
+    };
+
+    const fetchFeaturedReview = async () => {
+      const db = getFirestore();
+      const reviewsCollection = collection(db, 'reviews');
+      const q = query(reviewsCollection, where('featured', '==', true));
+
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          featuredReview.value = {
+            id: querySnapshot.docs[0].id,
+            ...querySnapshot.docs[0].data(),
+            createdAt: querySnapshot.docs[0].data().createdAt?.toDate() || new Date()
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching featured review:', error);
+      }
+    };
+
+    onMounted(() => {
+      fetchFeaturedReview();
+    });
+
+    return {
+      email,
+      featuredReview,
+      reasons,
+      beforeEnter,
+      enter,
+      subscribeNewsletter,
+      formatDate,
+      getCategoryLabel
+    };
   }
 };
 </script>
@@ -281,6 +363,24 @@ h1 {
   transform: translateX(-30px);
 }
 
+.featured-review {
+  background-color: #f8f9fa;
+}
+
+.featured-review .card {
+  border-radius: 15px;
+}
+
+.featured-review .lead {
+  font-style: italic;
+}
+
+.featured-
+review .badge {
+  font-size: 0.9rem;
+  padding: 0.5em 1em;
+}
+
 @media (max-width: 991.98px) {
   .hero-section {
     text-align: center;
@@ -295,3 +395,4 @@ h1 {
   }
 }
 </style>
+

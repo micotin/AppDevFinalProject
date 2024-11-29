@@ -21,6 +21,7 @@ const UserViewProduct = () => import('./components/UserViewProduct.vue');
 const UserOrder = () => import('./components/UserOrder.vue');
 const UserGallery = () => import('./components/UserGallery.vue');
 const UserViewGallery = () => import('./components/UserViewGallery.vue');
+const UserReview = () => import('./components/UserReview.vue');
 const AdminPanel = () => import('./components/AdminPanel.vue');
 const AdminDashboard = () => import('./components/AdminDashboard.vue');
 const AdminProducts = () => import('./components/AdminProducts.vue');
@@ -30,6 +31,7 @@ const AdminHistory = () => import('./components/AdminHistory.vue');
 const AdminContactUs = () => import('./components/AdminContactUs.vue');
 const AdminGallery = () => import('./components/AdminGallery.vue');
 const AdminCustomizeAttachment = () => import('./components/AdminCustomizeAttachment.vue');
+const AdminReview = () => import('./components/AdminReview.vue');
 const NotFound = () => import('./components/NotFound.vue');
 
 const routes = [
@@ -56,6 +58,7 @@ const routes = [
       { path: 'order/:orderId', name: 'UserOrder', component: UserOrder },
       { path: 'gallery', name: 'UserGallery', component: UserGallery },
       { path: 'gallery/:id', name: 'UserViewGallery', component: UserViewGallery },
+      { path: 'reviews', name: 'UserReview', component: UserReview },
     ],
   },
 
@@ -72,6 +75,7 @@ const routes = [
       { path: 'contact', name: 'AdminContactUs', component: AdminContactUs },
       { path: 'gallery', name: 'AdminGallery', component: AdminGallery },
       { path: 'customize-attachment', name: 'AdminCustomizeAttachment', component: AdminCustomizeAttachment },
+      { path: 'reviews', name: 'AdminReview', component: AdminReview },
     ],
   },
 

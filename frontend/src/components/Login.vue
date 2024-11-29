@@ -1,29 +1,50 @@
 <template>
   <div class="login-page d-flex justify-content-center align-items-center">
-    <div class="card login-card">
-      <div class="card-body">
-        <h2 class="card-title text-center mb-4">Welcome to Sam1 Flower Shop</h2>
+    <div class="login-card">
+      <div class="card-body p-4">
+        <h2 class="text-white mb-2">Login</h2>
+        <p class="text-light-purple mb-4">Welcome back!</p>
+        
         <form @submit.prevent="login">
-          <div class="mb-3">
-            <label for="email" class="form-label">Email address</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-              <input type="email" class="form-control" id="email" v-model="email" required>
-            </div>
+          <div class="mb-4">
+            <label for="email" class="form-label text-light-purple">Email</label>
+            <input 
+              type="email" 
+              class="form-control custom-input" 
+              id="email" 
+              v-model="email" 
+              placeholder="Enter your email"
+              required
+            >
           </div>
+          
           <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              <input type="password" class="form-control" id="password" v-model="password" required>
-            </div>
+            <label for="password" class="form-label text-light-purple">Password</label>
+            <input 
+              type="password" 
+              class="form-control custom-input" 
+              id="password" 
+              v-model="password" 
+              placeholder="Enter your password"
+              required
+            >
           </div>
-          <button type="submit" class="btn btn-primary w-100 mt-3">Login</button>
+          
+          <div class="text-end mb-4">
+            <router-link to="/forgot-password" class="forgot-link">Forgot password?</router-link>
+          </div>
+          
+          <button type="submit" class="btn custom-button w-100 mb-4">Login</button>
         </form>
-        <div class="text-center mt-3">
-          <p>Don't have an account? <router-link to="/signup" class="signup-link">Sign up here</router-link></p>
+        
+        <div class="text-center">
+          <p class="text-light-purple mb-0">
+            Don't have an account? 
+            <router-link to="/signup" class="signup-link">Signup</router-link>
+          </p>
         </div>
-        <div v-if="message" :class="['alert', isError ? 'alert-danger' : 'alert-success']" role="alert">
+        
+        <div v-if="message" :class="['alert', 'mt-3', isError ? 'alert-danger' : 'alert-success']" role="alert">
           {{ message }}
         </div>
       </div>
@@ -99,57 +120,83 @@ export default {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background-image: url('../assets/images/log-reg_bg.png');
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(135deg, #2d1b69 0%, #a12c82 100%);
 }
 
 .login-card {
+  width: 100%;
   max-width: 400px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  background: rgba(28, 28, 45, 0.9);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.card-title {
-  color: #4a0e4e;
+.text-light-purple {
+  color: #b4b4bb;
 }
 
-.form-label, .input-group-text, .signup-link, .alert-danger, .alert-success {
-  color: #4a0e4e;
+.custom-input {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  padding: 12px 16px;
 }
 
-.input-group-text {
-  background-color: #e0e8ff;
-  border: 1px solid #b8c4ff;
+.custom-input:focus {
+  background: rgba(40, 40, 55, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
-.form-control:focus {
-  border-color: #b8c4ff;
-  box-shadow: 0 0 0 0.2rem rgba(184, 196, 255, 0.25);
+.custom-input::placeholder {
+  color: #6c6c7d;
 }
 
-.btn-primary {
-  background-color: #7c3aed;
-  border-color: #7c3aed;
+.custom-button {
+  background: linear-gradient(135deg, #e5484d 0%, #a12c82 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  padding: 12px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.custom-button:hover {
+  opacity: 0.9;
+  color: white;
+}
+
+.forgot-link, .signup-link {
+  color: #b4b4bb;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover, .signup-link:hover {
+  color: white;
 }
 
 .signup-link {
-  color: #7c3aed;
+  color: #e5484d;
 }
 
-.signup-link:hover {
-  color: #6d28d9;
-  text-decoration: underline;
+.alert {
+  background: rgba(35, 35, 50, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .alert-danger {
-  background-color: #ffe4e4;
-  border-color: #ffb8b8;
+  background: rgba(229, 72, 77, 0.1);
+  border-color: rgba(229, 72, 77, 0.2);
 }
 
 .alert-success {
-  background-color: #e4ffe4;
-  border-color: #b8ffb8;
+  background: rgba(46, 160, 67, 0.1);
+  border-color: rgba(46, 160, 67, 0.2);
 }
 </style>
