@@ -281,7 +281,9 @@
     border: 1px solid #ced4da;
     padding: 0.75rem;
     transition: all 0.3s ease;
-  }
+  }   
+      
+
   
   .form-control:focus, .form-select:focus {
     border-color: #8e44ad;
