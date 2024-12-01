@@ -5,7 +5,7 @@
       <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
           <!-- Brand -->
-          <router-link class="navbar-brand" to="">
+          <router-link class="navbar-brand" to="home">
             <span class="brand-text">SAM1 Flower Shop</span>
           </router-link>
   
